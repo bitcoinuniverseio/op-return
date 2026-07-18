@@ -1,0 +1,39 @@
+# OP_RETURN / OP-20 | Bitcoin Universe Protocol Reference
+
+> Human docs: index.html
+> Field reference: reference.html
+> Network: Bitcoin
+> Classification: Bitcoin data carrier and fungibility experiment
+
+## Summary
+
+OP_RETURN is Bitcoin's provably unspendable data output. OP-20 is an experimental fungible token convention that encodes deploy, mint, and transfer messages in that carrier.
+
+## State model
+
+A raw OP_RETURN message carries JSON. OP-20 indexers derive token state from valid protocol events and the UTXOs that carry transfers.
+
+## Lifecycle
+
+1. Build OP_RETURN
+2. Deploy ticker
+3. Mint to address
+4. Transfer UTXO
+
+## Operations
+
+- OP_RETURN: Carries arbitrary protocol data in a provably unspendable output.
+- Deploy: Registers an OP-20 ticker, supply, mint limit, and deployer address.
+- Mint: Credits a declared address with a valid amount.
+- Transfer: Binds a transfer amount to a UTXO, whose recipient becomes the holder.
+
+## Safety
+
+1. OP_RETURN is a Bitcoin script primitive, not a token standard. OP-20 adds its own experimental interpretation on top.
+2. The OP-20 specification warns that the experiment may have no value. Treat all messages and assets accordingly.
+3. Only one OP_RETURN per transaction is allowed by the published OP-20 rules. Check the active indexer before broadcasting.
+
+## Sources
+
+- OP-20 experiment: https://op20labs.gitbook.io/op-20-experiment
+- Bitcoin developer guide: https://developer.bitcoin.org/devguide/transactions.html
