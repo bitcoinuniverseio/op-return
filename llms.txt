@@ -1,39 +1,51 @@
-# OP_RETURN / OP-20 | Bitcoin Universe Protocol Reference
+# OP_RETURN / OP-20
 
-> Human docs: index.html
-> Field reference: reference.html
-> Network: Bitcoin
-> Classification: Bitcoin data carrier and fungibility experiment
+> Data-carrier fundamentals and the OP-20 experiment token message format.
 
-## Summary
+## Chain and carrier
 
-OP_RETURN is Bitcoin's provably unspendable data output. OP-20 is an experimental fungible token convention that encodes deploy, mint, and transfer messages in that carrier.
+- Chain: Bitcoin
+- Carrier: OP_RETURN JSON
+
+## Overview
+
+OP_RETURN is a Bitcoin script pattern for carrying provably unspendable data. OP-20 is a separate experiment that places token messages in that carrier and interprets balances through its own indexer rules.
 
 ## State model
 
-A raw OP_RETURN message carries JSON. OP-20 indexers derive token state from valid protocol events and the UTXOs that carry transfers.
+The Bitcoin network accepts an OP_RETURN output as data. It does not create an OP-20 balance by itself. The protocol reader interprets the JSON, transaction order, address fields, and UTXO movements.
 
 ## Lifecycle
 
-1. Build OP_RETURN
-2. Deploy ticker
-3. Mint to address
-4. Transfer UTXO
+1. Build one standard OP_RETURN data output.
+2. Deploy an OP-20 ticker with supply policy and recipient address.
+3. Mint within the deployment limit and remaining supply.
+4. Transfer according to OP-20 UTXO ownership rules.
 
-## Operations
+## Rules
 
-- OP_RETURN: Carries arbitrary protocol data in a provably unspendable output.
-- Deploy: Registers an OP-20 ticker, supply, mint limit, and deployer address.
-- Mint: Credits a declared address with a valid amount.
-- Transfer: Binds a transfer amount to a UTXO, whose recipient becomes the holder.
+- OP_RETURN is a carrier, not a fungible token standard.
+- OP-20 uses p set to op-20 and deploy, mint, or transfer operations.
+- The first deployment of a ticker wins under case-insensitive comparison.
+- OP-20 documents one OP_RETURN output per transaction.
+- A deployment and mint include add, the recipient address field.
+- Precision may be up to 18 decimals under published OP-20 rules.
 
-## Safety
+## Field reference
 
-1. OP_RETURN is a Bitcoin script primitive, not a token standard. OP-20 adds its own experimental interpretation on top.
-2. The OP-20 specification warns that the experiment may have no value. Treat all messages and assets accordingly.
-3. Only one OP_RETURN per transaction is allowed by the published OP-20 rules. Check the active indexer before broadcasting.
+- p (string, required: yes): Literal op-20.
+- op (string, required: yes): deploy, mint, or transfer.
+- tick (string, required: yes): Case-insensitive ticker.
+- max (integer string, required: deploy): Total supply cap.
+- lim (integer string, required: deploy): Per-mint cap.
+- add (Bitcoin address, required: deploy / mint): Address receiving the deploy or mint.
+- amt (decimal string, required: mint / transfer): Positive amount within precision constraints.
 
-## Sources
+## Primary sources
 
-- OP-20 experiment: https://op20labs.gitbook.io/op-20-experiment
-- Bitcoin developer guide: https://developer.bitcoin.org/devguide/transactions.html
+- OP-20 experiment documentation: https://op20labs.gitbook.io/op-20-experiment
+- Bitcoin developer guide, OP_RETURN: https://developer.bitcoin.org/devguide/transactions.html
+
+## Operational caution
+
+OP-20 describes itself as an experiment. Build clear user warnings into any product flow and never present token validity as Bitcoin consensus.
