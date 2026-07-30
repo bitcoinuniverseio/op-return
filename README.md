@@ -1,35 +1,32 @@
-# OP_RETURN / OP-20 documentation
+# OP_RETURN / OP-20
 
-Bitcoin Universe documentation for OP_RETURN / OP-20 on Bitcoin.
+## Leave a mark that keeps its place.
 
-## What this covers
+OP_RETURN gives compact data a permanent place in Bitcoin history. OP-20 turns those messages into a community-readable world of deploys, mints, and transfers.
 
-OP_RETURN is a Bitcoin script pattern for carrying provably unspendable data. OP-20 is a separate experiment that places token messages in that carrier and interprets balances through its own indexer rules.
+OP_RETURN / OP-20 is part of the growing Bitcoin Universe—an onchain landscape for creators, collectors, and communities who want their digital stories to last.
 
-## State model
+## Step inside
 
-The Bitcoin network accepts an OP_RETURN output as data. It does not create an OP-20 balance by itself. The protocol reader interprets the JSON, transaction order, address fields, and UTXO movements.
+- [Experience the story](https://bitcoinuniverse.github.io/op-return/)
+- [Discover how it works](https://bitcoinuniverse.github.io/op-return/reference.html)
+- [Start your journey](https://bitcoinuniverse.github.io/op-return/guide.html)
+- [Open Bitcoin Universe](https://inscribe.bitcoinuniverse.io/)
 
-## Documentation site
+## What makes it special
 
-- Overview: [index.html](index.html)
-- Field reference: [reference.html](reference.html)
-- Build and verification playbook: [guide.html](guide.html)
+- **Carry:** Place concise data in a Bitcoin transaction with OP_RETURN.
+- **Coordinate:** Use OP-20 actions to express a token’s supply, mints, and movement.
+- **Remember:** Follow the confirmed transaction and its interpreted history over time.
 
-## Core rules
+## A clear onchain promise
 
-- OP_RETURN is a carrier, not a fungible token standard.
-- OP-20 uses p set to op-20 and deploy, mint, or transfer operations.
-- The first deployment of a ticker wins under case-insensitive comparison.
-- OP-20 documents one OP_RETURN output per transaction.
-- A deployment and mint include add, the recipient address field.
-- Precision may be up to 18 decimals under published OP-20 rules.
+Every OP_RETURN begins as a compact onchain message. Compatible OP-20 services bring those messages together into recognizable token activity.
 
-## Source material
+## Stay in control
 
-- [OP-20 experiment documentation](https://op20labs.gitbook.io/op-20-experiment)
-- [Bitcoin developer guide, OP_RETURN](https://developer.bitcoin.org/devguide/transactions.html)
+OP-20 balances are interpreted by compatible services and are separate from Bitcoin’s native consensus rules. Always review the exact payload, recipient, and fees before signing.
 
-## Scope
+---
 
-OP-20 describes itself as an experiment. Build clear user warnings into any product flow and never present token validity as Bitcoin consensus.
+Presented by [Bitcoin Universe](https://github.com/bitcoinuniverse).
