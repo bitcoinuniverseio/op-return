@@ -4,7 +4,7 @@
 
 OP_RETURN gives compact data a permanent place in Bitcoin history. OP-20 turns those messages into a community-readable world of deploys, mints, and transfers.
 
-OP_RETURN / OP-20 is part of the growing Bitcoin Universe—an onchain landscape for creators, collectors, and communities who want their digital stories to last.
+OP_RETURN / OP-20 is part of the growing Bitcoin Universe, an onchain landscape for creators, collectors, and communities who want their digital stories to last.
 
 ## Step inside
 
