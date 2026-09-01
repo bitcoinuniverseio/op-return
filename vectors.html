@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Test vectors for OP-20, OP Names and OP Inscriptions</title>
+<meta name="description" content="Valid and invalid OP_RETURN test vectors with real script hex and expected outcomes, produced by running the Bitcoin Universe OP-20, OP Names and OP Inscriptions parsers over each script.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-return/vectors.html">
+<meta name="theme-color" content="#050907" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f7f5" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="OP_RETURN protocol documentation">
+<meta property="og:title" content="Test vectors for OP-20, OP Names and OP Inscriptions">
+<meta property="og:description" content="Valid and invalid script hex with the outcome each organisation parser actually produced.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-return/vectors.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-return/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="mark" href="index.html"><span class="glyph" aria-hidden="true">6a</span><span>OP_RETURN</span></a>
+    <div class="toolbar">
+      <div class="search">
+        <label class="vh" for="site-search">Search this site</label>
+        <input id="site-search" type="search" placeholder="Search, or press /" autocomplete="off" spellcheck="false" data-base="">
+        <ul id="search-results" class="results"></ul>
+      </div>
+      <button id="theme-toggle" class="themebtn" type="button" hidden>theme</button>
+    </div>
+    <nav class="sitenav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="carrier.html">Carrier</a>
+      <a href="spec.html">Specification</a>
+      <a href="guide.html">Guide</a>
+      <a href="reference.html">Reference</a>
+      <a href="vectors.html" aria-current="page">Test vectors</a>
+      <a href="decoder.html">Decoder</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<div class="channel">
+  <div class="wrap">
+    <p class="eyebrow">Test vectors 1.0.0 / bitcoin mainnet</p>
+    <h1>Real scripts, recorded outcomes.</h1>
+    <p class="lede">Every vector below was produced by feeding the script into the organisation's own parser and recording exactly what came back. Nothing here is a guess about intended behaviour.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="note">
+      <strong>How these were produced</strong>
+      <p>Each vector is a synthetic transaction whose outputs were passed to the live OP-20 payload reader, the live OP Names transaction parser, or the live OP Inscriptions record decoder. The three columns record the outcome verbatim: an accepted result, a thrown rejection with its reason code, or <code>null</code>, which means the reader does not claim the payload at all.</p>
+      <p>Addresses use the well known witness v0 example address <code>bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4</code>. Paste any script into the <a href="decoder.html">decoder</a> to reproduce the classification in your own browser.</p>
+    </div>
+
+    <nav class="toc" aria-label="On this page">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#v-op20-valid">OP-20, accepted</a></li>
+        <li><a href="#v-op20-rejected">OP-20, rejected</a></li>
+        <li><a href="#v-op20-ignored">OP-20, not claimed</a></li>
+        <li><a href="#v-name-valid">OP Names, accepted</a></li>
+        <li><a href="#v-name-evidence">OP Names, evidence</a></li>
+        <li><a href="#v-name-ignored">OP Names, not claimed</a></li>
+        <li><a href="#v-receipt">Receipt selection</a></li>
+        <li><a href="#v-opi">OP Inscriptions classification</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="v-op20-valid">OP-20, accepted</h2>
+    <div class="table-scroll">
+      <table>
+        <caption>Vectors the OP-20 reader accepts</caption>
+        <thead><tr><th scope="col">Id</th><th scope="col">scriptPubKey hex</th><th scope="col">Result</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>V-20-01<br><span class="dg-mute">deploy</span></td>
+            <td><code class="hex">6a477b2270223a226f702d3230222c226f70223a226465706c6f79222c227469636b223a2250495045222c226d6178223a223231303030303030222c226c696d223a2231303030227d</code></td>
+            <td>operation <code>deploy</code>, reference <code>pipe</code>, ticker as written <code>PIPE</code>, maximum <code>21000000</code>, limit <code>1000</code>, no coercion</td>
+          </tr>
+          <tr>
+            <td>V-20-02<br><span class="dg-mute">mint</span></td>
+            <td><code class="hex">6a347b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231303030227d</code></td>
+            <td>operation <code>mint</code>, reference <code>pipe</code>, amount <code>1000</code>, recipient <code>null</code></td>
+          </tr>
+          <tr>
+            <td>V-20-03<br><span class="dg-mute">transfer with add</span></td>
+            <td><code class="hex">6a4c6a7b2270223a226f702d3230222c226f70223a227472616e73666572222c227469636b223a2250495045222c22616d74223a22323530222c22616464223a226263317177353038643671656a7874646734793572337a6172766172793063357877376b763866337434227d</code></td>
+            <td>operation <code>transfer</code>, amount <code>250</code>, recipient <code>bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4</code>. One stage, the balance moves immediately</td>
+          </tr>
+          <tr>
+            <td>V-20-04<br><span class="dg-mute">transfer without add</span></td>
+            <td><code class="hex">6a377b2270223a226f702d3230222c226f70223a227472616e73666572222c227469636b223a2250495045222c22616d74223a22323530227d</code></td>
+            <td>operation <code>transfer</code>, amount <code>250</code>, recipient <code>null</code>. Legacy two stage shape, see R-20-12</td>
+          </tr>
+          <tr>
+            <td>V-20-05<br><span class="dg-mute">mixed case ticker</span></td>
+            <td><code class="hex">6a317b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250695065222c22616d74223a2231227d</code></td>
+            <td>ticker as written <code>PiPe</code>, reference <code>pipe</code>. Identity is the reference, so this is the same asset as V-20-02</td>
+          </tr>
+          <tr>
+            <td>V-20-06<br><span class="dg-mute">trailing bytes</span></td>
+            <td><code class="hex">6a367b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2270697065222c22616d74223a2231227d206e6f7465</code></td>
+            <td>accepted, with <code>suffixBytes 4</code> and suffix text <code>note</code>. The bytes after the JSON object are recorded and not interpreted</td>
+          </tr>
+          <tr>
+            <td>V-20-07<br><span class="dg-mute">zero fraction amount</span></td>
+            <td><code class="hex">6a377b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a22313030302e3030227d</code></td>
+            <td>amount <code>1000</code> from the written value <code>1000.00</code>, coercion <code>legacy-zero-fraction-truncated-by-mysql-bigint</code> recorded</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="v-op20-rejected">OP-20, rejected</h2>
+    <p class="lead-col">These payloads are recognisably OP-20 and are refused with a reason. The Bitcoin transaction is still valid and the fee is still spent.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Vectors the OP-20 reader rejects</caption>
+        <thead><tr><th scope="col">Id</th><th scope="col">scriptPubKey hex</th><th scope="col">Rejection</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>V-20-08<br><span class="dg-mute">two OP-20 carriers</span></td>
+            <td><code class="hex">6a317b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231227d</code><br>plus<br><code class="hex">6a317b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2232227d</code></td>
+            <td><code>protocol_mismatch</code>: the transaction must contain exactly one OP-20 OP_RETURN output. Neither mint applies</td>
+          </tr>
+          <tr>
+            <td>V-20-09<br><span class="dg-mute">unknown field</span></td>
+            <td><code class="hex">6a3c7b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231222c226d656d6f223a2278227d</code></td>
+            <td><code>upstream_schema</code>: OP-20 payload contains unknown field <code>memo</code></td>
+          </tr>
+          <tr>
+            <td>V-20-10<br><span class="dg-mute">unsupported operation</span></td>
+            <td><code class="hex">6a317b2270223a226f702d3230222c226f70223a226275726e222c227469636b223a2250495045222c22616d74223a2231227d</code></td>
+            <td><code>protocol_mismatch</code>: the OP-20 operation is unsupported. There is no burn operation</td>
+          </tr>
+          <tr>
+            <td>V-20-11<br><span class="dg-mute">zero amount</span></td>
+            <td><code class="hex">6a317b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2230227d</code></td>
+            <td><code>upstream_schema</code>: the mint amount must be a positive atomic amount</td>
+          </tr>
+          <tr>
+            <td>V-20-12<br><span class="dg-mute">non zero fraction</span></td>
+            <td><code class="hex">6a347b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231302e35227d</code></td>
+            <td><code>upstream_schema</code>: <code>10.5</code> is refused. Only an all zero fraction is tolerated, and only by truncation</td>
+          </tr>
+          <tr>
+            <td>V-20-13<br><span class="dg-mute">duplicate key</span></td>
+            <td><code class="hex">6a3b7b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2270697065222c22616d74223a2231222c22616d74223a2232227d</code></td>
+            <td><code>protocol_mismatch</code>: the payload repeats field <code>amt</code>. Checked textually, before parsing</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="v-op20-ignored">OP-20, not claimed</h2>
+    <p class="lead-col">These produce <code>null</code>. The reader does not consider them OP-20 at all, which is different from rejecting them.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Vectors the OP-20 reader does not claim</caption>
+        <thead><tr><th scope="col">Id</th><th scope="col">scriptPubKey hex</th><th scope="col">Why</th></tr></thead>
+        <tbody>
+          <tr><td>V-20-14</td><td><code class="hex">6a327b2270223a226272632d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231227d</code></td><td>the tag is <code>brc-20</code>, not <code>op-20</code></td></tr>
+          <tr><td>V-20-15</td><td><code class="hex">6a3768656c6c6f207b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2270697065222c22616d74223a2231227d</code></td><td>text precedes the opening brace, so the payload does not begin with a JSON object</td></tr>
+          <tr><td>V-20-16</td><td><code class="hex">6a51</code></td><td><code>0x51</code> is <code>OP_1</code>, not a data push. The carrier is unreadable</td></tr>
+          <tr><td>V-20-17</td><td><code class="hex">6a4c05aabb</code></td><td>a <code>PUSHDATA1</code> declaring 5 bytes with only 2 present</td></tr>
+          <tr><td>V-20-18</td><td><code class="hex">00141111111111111111111111111111111111111111</code></td><td>an ordinary witness v0 output, no carrier at all</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="v-name-valid">OP Names, accepted</h2>
+    <div class="table-scroll">
+      <table>
+        <caption>Vectors the OP Names parser accepts</caption>
+        <thead><tr><th scope="col">Id</th><th scope="col">scriptPubKey hex</th><th scope="col">Result</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>V-NM-01<br><span class="dg-mute">JSON reg with add</span></td>
+            <td><code class="hex">6a4c5f7b2270223a226f706e73222c226f70223a22726567222c226e616d65223a227361746f7368692e627463222c22616464223a226263317177353038643671656a7874646734793572337a6172766172793063357877376b763866337434227d</code></td>
+            <td>valid, operation <code>reg</code>, name <code>satoshi.btc</code>, label <code>satoshi</code>, namespace <code>btc</code>, asset id <code>op_names:name:b64.c2F0b3NoaS5idGM</code>, explicit address present, encoding <code>json</code></td>
+          </tr>
+          <tr>
+            <td>V-NM-02<br><span class="dg-mute">JSON reg, no add</span></td>
+            <td><code class="hex">6a2c7b2270223a226f706e73222c226f70223a22726567222c226e616d65223a227361746f7368692e627463227d</code></td>
+            <td>valid, operation <code>reg</code>, explicit address <code>null</code>. The owner comes from the receipt output</td>
+          </tr>
+          <tr>
+            <td>V-NM-03<br><span class="dg-mute">JSON transfer</span></td>
+            <td><code class="hex">6a317b2270223a226f706e73222c226f70223a227472616e73666572222c226e616d65223a227361746f7368692e627463227d</code></td>
+            <td>valid, operation <code>transfer</code>. Authorisation still depends on input 0 spending an output of the exact current owner</td>
+          </tr>
+          <tr>
+            <td>V-NM-04<br><span class="dg-mute">legacy plain text</span></td>
+            <td><code class="hex">6a0b7361746f7368692e627463</code></td>
+            <td>valid, operation <code>reg</code>, encoding <code>text</code>. No protocol tag needed, because the text has exactly one literal dot</td>
+          </tr>
+          <tr>
+            <td>V-NM-05<br><span class="dg-mute">case normalisation</span></td>
+            <td><code class="hex">6a0b5361746f7368692e425443</code></td>
+            <td>valid. Written <code>Satoshi.BTC</code>, normalised to <code>satoshi.btc</code>, same asset id as V-NM-04</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="v-name-evidence">OP Names, recorded as evidence</h2>
+    <p class="lead-col">These are recognisably OP Names attempts. They are stored with a reason and never become assets.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Vectors stored as unapplied evidence</caption>
+        <thead><tr><th scope="col">Id</th><th scope="col">scriptPubKey hex</th><th scope="col">Reason</th></tr></thead>
+        <tbody>
+          <tr><td>V-NM-06</td><td><code class="hex">6a0c7361746f7368692e622d7463</code></td><td><code>invalid_op_name</code>: the namespace <code>b-tc</code> is not lowercase ASCII alphanumeric</td></tr>
+          <tr><td>V-NM-07</td><td><code class="hex">6a042e627463</code></td><td><code>invalid_op_name</code>: <code>.btc</code> has an empty label</td></tr>
+          <tr><td>V-NM-08</td><td><code class="hex">6a377b2270223a226f706e73222c226f70223a22726567222c226e616d65223a227361746f7368692e627463222c226d656d6f223a2278227d</code></td><td><code>unknown_field</code>: <code>memo</code> is not allowed on a <code>reg</code></td></tr>
+          <tr><td>V-NM-09</td><td><code class="hex">6a2d7b2270223a226f706e73222c226f70223a226275726e222c226e616d65223a227361746f7368692e627463227d</code></td><td><code>unsupported_operation</code>: only <code>reg</code> and <code>transfer</code> exist</td></tr>
+          <tr><td>V-NM-10</td><td><code class="hex">6a04612eff62</code></td><td><code>invalid_utf8</code>: the bytes contain <code>0x2e</code> so the attempt is recorded, but they are not valid UTF-8</td></tr>
+          <tr><td>V-NM-11<br><span class="dg-mute">two carriers</span></td><td><code class="hex">6a0b7361746f7368692e627463</code><br>plus<br><code class="hex">6a0c6e616b616d6f746f2e627463</code></td><td><code>ambiguous_op_return</code>: two OP_RETURN outputs in one transaction. Neither name is applied, even though both are individually valid</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="v-name-ignored">OP Names, not claimed</h2>
+    <div class="table-scroll">
+      <table>
+        <caption>Vectors the OP Names parser does not claim at all</caption>
+        <thead><tr><th scope="col">Id</th><th scope="col">scriptPubKey hex</th><th scope="col">Why</th></tr></thead>
+        <tbody>
+          <tr><td>V-NM-12</td><td><code class="hex">6a05612e622e63</code></td><td><code>a.b.c</code> has two literal dots, so the text shape does not match. Not evidence, not an asset</td></tr>
+          <tr><td>V-NM-13</td><td><code class="hex">6a0d7361746f736869e38082627463</code></td><td><code>satoshi</code> then <code>U+3002</code> then <code>btc</code>. The ideographic full stop is not a literal dot, so the text has zero dots and is not claimed. This is the homograph defence working</td></tr>
+          <tr><td>V-NM-14</td><td><code class="hex">6a077361746f736869</code></td><td>no dot at all</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="v-receipt">Receipt selection</h2>
+    <p class="lead-col">Verified directly against the receipt selector for a registration with no <code>add</code> field.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Which output becomes the owner</caption>
+        <thead><tr><th scope="col">Carrier index</th><th scope="col">Chosen receipt index</th><th scope="col">Outcome</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>1</td><td>owner taken from output 1, <code>burned: false</code></td></tr>
+          <tr><td>1</td><td>0</td><td>owner taken from output 0, <code>burned: false</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="v-opi">OP Inscriptions classification</h2>
+    <p class="lead-col">Produced by the OP Inscriptions record decoder. Remember R-OPI-6: the labels this decoder assigns to foreign payloads are catalogue metadata, not an authority decision by the owning protocol.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Vectors run through the OP Inscriptions decoder</caption>
+        <thead><tr><th scope="col">Id</th><th scope="col">scriptPubKey hex</th><th scope="col">Recorded classification</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>V-OPI-01<br><span class="dg-mute">explicit tag</span></td>
+            <td><code class="hex">6a4c5a7b2270223a226f702d696e736372697074696f6e73222c226f70223a22696e736372696265222c22616464223a226263317177353038643671656a7874646734793572337a6172766172793063357877376b763866337434227d</code></td>
+            <td>protocol <code>OP_INSCRIPTIONS</code>, operation <code>inscribe</code>, address recovered, content type <code>json</code>, media type <code>application/json</code>, renderable, 90 payload bytes, id <code>&lt;txid&gt;:0</code></td>
+          </tr>
+          <tr>
+            <td>V-OPI-02<br><span class="dg-mute">historical envelope</span></td>
+            <td><code class="hex">6a4c4c7b22616464223a226263317177353038643671656a7874646734793572337a6172766172793063357877376b763866337434222c22636f6c6c656374696f6e223a2270696f6e65657273227d</code></td>
+            <td>protocol <code>OP_INSCRIPTIONS</code>, operation <code>inscribe</code>. Accepted only because every key is in the narrow historical set and an address is present</td>
+          </tr>
+          <tr>
+            <td>V-OPI-03<br><span class="dg-mute">foreign, OP-20</span></td>
+            <td><code class="hex">6a347b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231303030227d</code></td>
+            <td>labelled protocol <code>OP-20</code>, operation <code>mint</code>, ticker <code>PIPE</code>. Catalogue label only</td>
+          </tr>
+          <tr>
+            <td>V-OPI-04<br><span class="dg-mute">foreign, bare name</span></td>
+            <td><code class="hex">6a0b7361746f7368692e627463</code></td>
+            <td>labelled protocol <code>OP_NAMES</code>, operation <code>inscribe</code>, ticker <code>BTC</code>, content type <code>text</code>. The label rule here is looser than R-NAME-4</td>
+          </tr>
+          <tr>
+            <td>V-OPI-05<br><span class="dg-mute">plain text</span></td>
+            <td><code class="hex">6a0b68656c6c6f20776f726c64</code></td>
+            <td>protocol <code>TEXT</code>, no operation, content type <code>text</code>, media type <code>text/plain</code></td>
+          </tr>
+          <tr>
+            <td>V-OPI-06<br><span class="dg-mute">arbitrary JSON</span></td>
+            <td><code class="hex">6a0d7b22666f6f223a22626172227d</code></td>
+            <td>protocol <code>JSON</code>. Not an OP inscription: it has no protocol tag and its keys are outside the historical envelope set</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="meta">
+      <div><b>Owning repository</b> <span>bitcoinuniverseio/op-return</span></div>
+      <div><b>Source path</b> <span>/vectors.html</span></div>
+      <div><b>Document version</b> <span>1.0.0</span></div>
+      <div><b>Lifecycle</b> <span>experimental</span></div>
+      <div><b>Chain and network</b> <span>bitcoin, mainnet</span></div>
+      <div><b>Last verified</b> <span>2026-09-01</span></div>
+    </div>
+    <p class="links">
+      <a href="https://github.com/bitcoinuniverseio/op-return/edit/main/vectors.html">Edit this page on GitHub</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return">Repository</a>
+      <a href="https://docs.bitcoinuniverse.io">docs.bitcoinuniverse.io</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">Report a vulnerability</a>
+    </p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>

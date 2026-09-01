@@ -1,18 +1,273 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Get started with OP_RETURN / OP-20 — Bitcoin Universe</title>
-  <meta name="description" content="A simple, user-first path for exploring OP_RETURN / OP-20 safely.">
-  <meta name="theme-color" content="#09090f">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guide: reading and writing OP_RETURN protocol transactions</title>
+<meta name="description" content="A plain-language walkthrough of OP-20, OP Names and OP Inscriptions transactions, with worked byte-level examples and an honest support matrix of what Bitcoin Universe products actually do with each one.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-return/guide.html">
+<meta name="theme-color" content="#050907" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f7f5" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="OP_RETURN protocol documentation">
+<meta property="og:title" content="Guide: reading and writing OP_RETURN protocol transactions">
+<meta property="og:description" content="Worked transaction examples for OP-20, OP Names and OP Inscriptions, plus a verified support matrix.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-return/guide.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-return/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body style="--accent:#ff7a45;--accent-2:#ffd166">
-<div class="topbar"><div class="wrap nav"><a class="brand" href="index.html"><span class="brand-mark">OP</span><span>OP_RETURN / OP-20</span></a><nav class="nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a href="reference.html">Discover</a><a href="guide.html" aria-current="page">Get started</a><a class="nav-cta" href="https://inscribe.bitcoinuniverse.io/">Open Bitcoin Universe ↗</a></nav></div></div>
-<main>
-  <div class="wrap hero compact"><div><div class="eyebrow">Your next onchain moment</div><h1>From curiosity to <span class="gradient">confirmation.</span></h1><p class="lede">You do not need to think like a protocol engineer. Start with the story, understand the transaction, and stay in control of your wallet.</p><div class="actions"><a class="button primary" href="https://inscribe.bitcoinuniverse.io/">Open Bitcoin Universe ↗</a><a class="button secondary" href="reference.html">Discover OP_RETURN / OP-20</a></div></div><div class="hero-art" aria-hidden="true"><div class="orbit"><div class="core">OP</div><span class="spark one">Bitcoin</span><span class="spark two">community</span><span class="spark three">onchain</span></div></div></div>
-  <section><div class="wrap story"><div class="story-copy"><div class="eyebrow">A simple journey</div><h2>Four steps to a confident experience.</h2><p class="lede" style="font-size:18px;margin-top:22px">Every action ends with a real network transaction. Take the time to understand what your wallet shows.</p></div><div class="story-list"><article class="story-item"><b>01</b><div><h3>Choose the moment</h3><p>Decide whether you are discovering a token, minting within its published terms, or transferring an existing balance.</p></div></article><article class="story-item"><b>02</b><div><h3>Review the details</h3><p>Confirm the Bitcoin network, ticker, amount, recipient, and total fees before you approve anything.</p></div></article><article class="story-item"><b>03</b><div><h3>Sign with your wallet</h3><p>Keep control of your keys and approve only a transaction you understand.</p></div></article><article class="story-item"><b>04</b><div><h3>Follow the confirmation</h3><p>Use a compatible explorer or wallet to see the confirmed transaction and OP-20 result.</p></div></article></div></div></section>
-  <section><div class="wrap spotlight"><div class="eyebrow">Stay in control</div><h2>Your keys. Your review. Your decision.</h2><p>OP-20 balances are interpreted by compatible services and are separate from Bitcoin’s native consensus rules. Always review the exact payload, recipient, and fees before signing.</p><div class="actions"><a class="button primary" href="https://inscribe.bitcoinuniverse.io/">Explore supported experiences ↗</a></div></div></section>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="mark" href="index.html"><span class="glyph" aria-hidden="true">6a</span><span>OP_RETURN</span></a>
+    <div class="toolbar">
+      <div class="search">
+        <label class="vh" for="site-search">Search this site</label>
+        <input id="site-search" type="search" placeholder="Search, or press /" autocomplete="off" spellcheck="false" data-base="">
+        <ul id="search-results" class="results"></ul>
+      </div>
+      <button id="theme-toggle" class="themebtn" type="button" hidden>theme</button>
+    </div>
+    <nav class="sitenav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="carrier.html">Carrier</a>
+      <a href="spec.html">Specification</a>
+      <a href="guide.html" aria-current="page">Guide</a>
+      <a href="reference.html">Reference</a>
+      <a href="vectors.html">Test vectors</a>
+      <a href="decoder.html">Decoder</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<div class="channel">
+  <div class="wrap">
+    <p class="eyebrow">Practical guide</p>
+    <h1>What a transaction actually looks like.</h1>
+    <p class="lede">Three worked examples, byte by byte, plus a straight answer about what Bitcoin Universe products will and will not do with each protocol.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <nav class="toc" aria-label="On this page">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#mental">The mental model</a></li>
+        <li><a href="#ex-op20">Worked example: OP-20 mint</a></li>
+        <li><a href="#ex-name">Worked example: OP Names registration</a></li>
+        <li><a href="#ex-opi">Worked example: OP Inscriptions content</a></li>
+        <li><a href="#matrix">Support matrix</a></li>
+        <li><a href="#checks">Before you sign</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="mental">The mental model</h2>
+    <p class="lead-col">Every transaction on this carrier has the same three parts, and confusing them is where almost all mistakes come from.</p>
+    <ol class="lead-col">
+      <li><strong>The intent</strong> lives in the OP_RETURN payload. It says what you want to happen.</li>
+      <li><strong>The result holder</strong> is a different, spendable output. For OP Names it is called the receipt; for OP-20 it is the recipient address or the transfer UTXO.</li>
+      <li><strong>The interpretation</strong> happens later, in an indexer that replays blocks. Bitcoin confirms your bytes. An indexer decides what they mean.</li>
+    </ol>
+    <p class="lead-col">A transaction can confirm perfectly and still change nothing at the protocol layer, because step three rejected it. That is not a failure of Bitcoin, and there is no refund.</p>
+
+    <h2 id="ex-op20">Worked example: an OP-20 mint</h2>
+    <p class="lead-col">Minting 1000 units of the token whose ticker is written <code>PIPE</code>.</p>
+
+    <h3>The payload</h3>
+    <pre><code>{"p":"op-20","op":"mint","tick":"PIPE","amt":"1000"}</code></pre>
+    <p class="lead-col">52 bytes of UTF-8. The <code>tick</code> is written in uppercase but the reader normalises it to the reference <code>pipe</code>, which is what identity is compared on. The stable asset identity becomes <code>op_return:op20:b64.cGlwZQ</code>.</p>
+
+    <h3>The script</h3>
+    <div class="frame-scroll">
+      <div class="frame">
+        <div class="frame-row">
+          <div class="fld op"><span class="off">byte 0</span><span class="val">6a</span><span class="nm">OP_RETURN</span></div>
+          <div class="fld"><span class="off">byte 1</span><span class="val">34</span><span class="nm">push, 0x34 = 52 bytes</span></div>
+          <div class="fld pay"><span class="off">bytes 2..53</span><span class="val">7b2270223a226f702d3230222c...227d</span><span class="nm">the JSON above</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="legend">scriptPubKey, 54 bytes: <code class="hex">6a347b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231303030227d</code></p>
+
+    <h3>The transaction</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Output layout for an OP-20 mint</caption>
+        <thead><tr><th scope="col">Output</th><th scope="col">Value</th><th scope="col">Script</th><th scope="col">Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>vout 0</td><td>0 sats</td><td>OP_RETURN payload</td><td>the intent</td></tr>
+          <tr><td>vout 1</td><td>546 sats or more</td><td>your address</td><td>where the mint lands</td></tr>
+          <tr><td>vout 2</td><td>remainder</td><td>your change address</td><td>fee change</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead-col">The whole scriptPubKey is 54 bytes, well inside the 83 byte default relay limit, so this propagates everywhere. A ticker long enough to push the script past 83 bytes will still be valid but may not relay on older default policy.</p>
+
+    <div class="note warn">
+      <strong>Two mints in one transaction</strong>
+      <p>Putting two OP-20 payloads in one transaction is rejected outright with <code>protocol_mismatch</code>. Neither one applies. Send two transactions.</p>
+    </div>
+
+    <h2 id="ex-name">Worked example: an OP Names registration</h2>
+    <p class="lead-col">Registering <code>satoshi.btc</code>. Two encodings are accepted and they behave differently.</p>
+
+    <h3>Legacy plain text, 11 bytes</h3>
+    <pre><code>satoshi.btc</code></pre>
+    <p class="legend">scriptPubKey, 13 bytes: <code class="hex">6a0b7361746f7368692e627463</code></p>
+    <p class="lead-col">No protocol tag at all. The reader accepts it because the trimmed text has exactly one literal dot. Ownership comes from the receipt output.</p>
+
+    <h3>Explicit JSON with an address</h3>
+    <pre><code>{"p":"opns","op":"reg","name":"satoshi.btc","add":"bc1q..."}</code></pre>
+    <p class="lead-col">Here the owner is stated in the payload, so the name enters address custody with that address and the receipt output does not decide the owner.</p>
+
+    <h3>Which output is the receipt</h3>
+    <p class="lead-col">This is the rule people get wrong. Without <code>add</code>, the receipt is <strong>output 0 when the OP_RETURN sits at any index above 0, and output 1 otherwise</strong>.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Receipt selection, verified against the reader</caption>
+        <thead><tr><th scope="col">Layout</th><th scope="col">Receipt index</th><th scope="col">Result</th></tr></thead>
+        <tbody>
+          <tr><td>vout 0 = OP_RETURN, vout 1 = your address</td><td>1</td><td>owner is the vout 1 address</td></tr>
+          <tr><td>vout 0 = your address, vout 1 = OP_RETURN</td><td>0</td><td>owner is the vout 0 address</td></tr>
+          <tr><td>vout 0 = OP_RETURN, no other output</td><td>1</td><td><code>missing_receipt_output</code>, the name is burned</td></tr>
+          <tr><td>vout 0 = OP_RETURN, vout 1 = another OP_RETURN</td><td>1</td><td><code>ambiguous_op_return</code>, nothing is applied at all</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note bad">
+      <strong>One data output only</strong>
+      <p>OP Names is stricter than OP-20 here. If your wallet adds any second OP_RETURN output for its own purposes, the entire transaction becomes <code>ambiguous_op_return</code> and your registration does not happen.</p>
+    </div>
+
+    <h3>Moving a name later</h3>
+    <p class="lead-col">A name in address custody moves only by an explicit <code>transfer</code> payload whose input 0 spends an output belonging to the exact current owner. That authorised transfer places the name into UTXO custody at the receipt outpoint. From then on the name follows spends of that exact outpoint to output 0, which is what makes a name behave like a physical object rather than a balance.</p>
+
+    <h2 id="ex-opi">Worked example: OP Inscriptions content</h2>
+    <p class="lead-col">Content written directly into the carrier, with an explicit protocol tag.</p>
+    <pre><code>{"p":"op-inscriptions","op":"inscribe","add":"bc1q..."}</code></pre>
+    <p class="lead-col">The record identity is the outpoint, <code>txid:vout</code>. Anything larger than a single carrier is written as several OP_RETURN records that share a group identifier and a declared total; the indexer assembles them only when every part is present exactly once. A group missing one part is never rendered and never partially shown.</p>
+
+    <div class="note">
+      <strong>What the catalogue labels mean</strong>
+      <p>The OP Inscriptions scanner tags foreign payloads it encounters, so an OP-20 mint appears in its catalogue labelled <code>OP-20</code> and a dotted name appears labelled <code>OP_NAMES</code>. That label is a catalogue convenience. It does not make the payload an OP inscription, and it does not mean the owning protocol's own reader accepted it. The bare text label in particular is looser than the real OP Names identity rule.</p>
+    </div>
+
+    <h2 id="matrix">Support matrix</h2>
+    <p class="lead-col">Generated from the Core capability snapshot, which is generated in turn from the marketplace protocol registry in <code>bitcoinuniverseio/core</code>. Only claims backed by that snapshot appear here.</p>
+
+    <h3>Bitcoin Universe surfaces</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Which product surface can do what with each protocol</caption>
+        <thead><tr><th scope="col">Surface</th><th scope="col">OP-20</th><th scope="col">OP Names</th><th scope="col">OP Inscriptions</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Core</th><td>view, discover, view-collection, view-activity, view-transaction</td><td>view, discover, view-collection, view-activity, view-transaction</td><td>the same five, plus list, unlist, buy, settle, reconcile</td></tr>
+          <tr><th scope="row">Wallet</th><td>view, send, receive</td><td>view, send, receive</td><td>view, send, receive</td></tr>
+          <tr><th scope="row">Inscribe</th><td>deploy, mint, inscribe, transfer</td><td class="no">not recorded</td><td class="no">not recorded</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead-col">OP-20 is the only one of the three with a recorded Inscribe surface. OP Names and OP Inscriptions have no creation surface recorded in the registry, so this site does not claim one.</p>
+
+    <h3>Marketplace actions and the recorded reason for each refusal</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>OP-20, registry id op_return. Availability read-only, mode read-only</caption>
+        <thead><tr><th scope="col">Action</th><th scope="col">Supported</th><th scope="col">Recorded reason when not</th></tr></thead>
+        <tbody>
+          <tr><td>view, view-collection, view-activity</td><td class="yes">yes, read-only</td><td></td></tr>
+          <tr><td>list</td><td class="no">no</td><td>Legacy random-key/replay marketplace mutations are retired and fail closed; the backend returns HTTP 410.</td></tr>
+          <tr><td>update-listing</td><td class="no">no</td><td>Legacy random-key/replay marketplace mutations are retired and fail closed; the backend returns HTTP 410.</td></tr>
+          <tr><td>unlist</td><td class="no">no</td><td>Legacy random-key/replay marketplace mutations are retired and fail closed; the backend returns HTTP 410.</td></tr>
+          <tr><td>buy</td><td class="no">no</td><td>Legacy random-key/replay marketplace mutations are retired and fail closed; the backend returns HTTP 410. The current UI can reach a broadcast step before registration fails, so buy is not declared supported.</td></tr>
+          <tr><td>make-offer, accept-offer, cancel-offer, sell</td><td class="no">no</td><td>OP-20 has no executable offer workflow on this marketplace surface.</td></tr>
+          <tr><td>settle</td><td class="no">no</td><td>OP-20 has no executable settle authority on this marketplace surface.</td></tr>
+          <tr><td>reconcile</td><td class="no">no</td><td>OP-20 has no executable reconcile authority on this marketplace surface.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note bad">
+      <strong>Read that buy reason twice</strong>
+      <p>The interface can reach a broadcast step before the registration fails. A user can therefore spend real fees on a purchase that never registers. That is exactly why <code>buy</code> is not declared supported for OP-20 or OP Names, and why this documentation will not describe an OP-20 purchase flow.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <caption>OP Names, registry id op_names. Availability read-only, mode read-only</caption>
+        <thead><tr><th scope="col">Action</th><th scope="col">Supported</th><th scope="col">Recorded reason when not</th></tr></thead>
+        <tbody>
+          <tr><td>view, view-collection, view-activity</td><td class="yes">yes, read-only</td><td></td></tr>
+          <tr><td>list, update-listing, unlist, buy</td><td class="no">no</td><td>Legacy random-key/replay marketplace mutations are retired and fail closed; the backend returns HTTP 410. For buy, the current UI can reach a broadcast step before registration fails.</td></tr>
+          <tr><td>make-offer, accept-offer, cancel-offer, sell</td><td class="no">no</td><td>OP Names has no executable offer workflow on this marketplace surface.</td></tr>
+          <tr><td>settle</td><td class="no">no</td><td>OP Names has no executable settle authority on this marketplace surface.</td></tr>
+          <tr><td>reconcile</td><td class="no">no</td><td>OP Names has no executable reconcile authority on this marketplace surface.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <caption>OP Inscriptions, registry id op_inscriptions. Availability enabled, mode in-app-execution</caption>
+        <thead><tr><th scope="col">Action</th><th scope="col">Supported</th><th scope="col">Recorded reason when not</th></tr></thead>
+        <tbody>
+          <tr><td>view, view-collection, view-activity</td><td class="yes">yes, in app</td><td></td></tr>
+          <tr><td>list</td><td class="yes">yes, in app</td><td></td></tr>
+          <tr><td>unlist</td><td class="yes">yes, in app</td><td></td></tr>
+          <tr><td>buy</td><td class="yes">yes, in app</td><td></td></tr>
+          <tr><td>settle</td><td class="yes">yes, in app</td><td></td></tr>
+          <tr><td>reconcile</td><td class="yes">yes, in app</td><td></td></tr>
+          <tr><td>update-listing</td><td class="no">no</td><td>OP Inscriptions listings must be cancelled and relisted; no atomic listing update is implemented.</td></tr>
+          <tr><td>make-offer, accept-offer, cancel-offer, sell</td><td class="no">no</td><td>OP Inscriptions has no executable offer workflow on this marketplace surface.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="lead-col">This is the useful contrast between three protocols on the same carrier: sharing an output type buys them nothing in common at the product layer. What decides tradeability is whether a settlement authority exists that can prove a fill from chain data. OP Inscriptions has one. OP-20 and OP Names do not.</p>
+
+    <h2 id="checks">Before you sign</h2>
+    <ol class="lead-col">
+      <li><strong>Check the network.</strong> Every rule here is mainnet.</li>
+      <li><strong>Read the payload, not the interface.</strong> Decode the actual scriptPubKey with the <a href="decoder.html">decoder</a> and confirm the ticker, amount and recipient are what you expect.</li>
+      <li><strong>Count the OP_RETURN outputs.</strong> One. Always one.</li>
+      <li><strong>Check the value on the data output is zero.</strong> Anything else is destroyed.</li>
+      <li><strong>Identify the receipt output.</strong> For an OP Names registration without <code>add</code>, know which output will own the name.</li>
+      <li><strong>Check your coin selection.</strong> If your wallet does not know about pending OP-20 transfer UTXOs, name custody outpoints and listed assets, it can spend one as fee change and destroy it.</li>
+      <li><strong>Accept the fee.</strong> A rejected payload still costs the fee. There is no reversal.</li>
+    </ol>
+  </div>
+</section>
+
 </main>
-<footer><div class="wrap footer-inner"><span>OP_RETURN / OP-20 on Bitcoin</span><span>Presented by <a href="https://github.com/bitcoinuniverse/op-return">Bitcoin Universe</a></span></div></footer></body></html>
+
+<footer>
+  <div class="wrap">
+    <div class="meta">
+      <div><b>Owning repository</b> <span>bitcoinuniverseio/op-return</span></div>
+      <div><b>Source path</b> <span>/guide.html</span></div>
+      <div><b>Document version</b> <span>1.0.0</span></div>
+      <div><b>Lifecycle</b> <span>experimental</span></div>
+      <div><b>Chain and network</b> <span>bitcoin, mainnet</span></div>
+      <div><b>Last verified</b> <span>2026-09-01</span></div>
+    </div>
+    <p class="links">
+      <a href="https://github.com/bitcoinuniverseio/op-return/edit/main/guide.html">Edit this page on GitHub</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return">Repository</a>
+      <a href="https://docs.bitcoinuniverse.io">docs.bitcoinuniverse.io</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">Report a vulnerability</a>
+    </p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>

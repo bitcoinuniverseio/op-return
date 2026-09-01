@@ -1,23 +1,235 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>OP_RETURN / OP-20 — A signal written into Bitcoin</title>
-  <meta name="description" content="OP_RETURN gives compact data a permanent place in Bitcoin history. OP-20 turns those messages into a community-readable world of deploys, mints, and transfers.">
-  <meta name="theme-color" content="#09090f">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OP_RETURN: one carrier, three Bitcoin protocols</title>
+<meta name="description" content="OP_RETURN is Bitcoin's provably unspendable data output. This site documents the carrier itself and the three protocols Bitcoin Universe indexes on it: OP-20 tokens, OP Names and OP Inscriptions.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-return/">
+<meta name="theme-color" content="#050907" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f7f5" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="OP_RETURN protocol documentation">
+<meta property="og:title" content="OP_RETURN: one carrier, three Bitcoin protocols">
+<meta property="og:description" content="The provably unspendable data output, and the OP-20, OP Names and OP Inscriptions protocols that ride on it.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-return/">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-return/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body style="--accent:#ff7a45;--accent-2:#ffd166">
-<div class="topbar"><div class="wrap nav"><a class="brand" href="index.html"><span class="brand-mark">OP</span><span>OP_RETURN / OP-20</span></a><nav class="nav-links" aria-label="Main navigation"><a href="index.html" aria-current="page">Home</a><a href="reference.html">Discover</a><a href="guide.html">Get started</a><a class="nav-cta" href="https://inscribe.bitcoinuniverse.io/">Open Bitcoin Universe ↗</a></nav></div></div>
-<main>
-  <div class="wrap hero">
-    <div><div class="eyebrow">A signal written into Bitcoin</div><h1>Leave a mark that keeps its place<span class="gradient">.</span></h1><p class="lede">OP_RETURN gives compact data a permanent place in Bitcoin history. OP-20 turns those messages into a community-readable world of deploys, mints, and transfers.</p><div class="actions"><a class="button primary" href="guide.html">Start your journey →</a><a class="button secondary" href="reference.html">Discover how it works</a></div></div>
-    <div class="hero-art" aria-hidden="true"><div class="orbit"><div class="core">OP</div><span class="spark one">Bitcoin</span><span class="spark two">community</span><span class="spark three">onchain</span></div></div>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="mark" href="index.html"><span class="glyph" aria-hidden="true">6a</span><span>OP_RETURN</span></a>
+    <div class="toolbar">
+      <div class="search">
+        <label class="vh" for="site-search">Search this site</label>
+        <input id="site-search" type="search" placeholder="Search, or press /" autocomplete="off" spellcheck="false" data-base="">
+        <ul id="search-results" class="results"></ul>
+      </div>
+      <button id="theme-toggle" class="themebtn" type="button" hidden>theme</button>
+    </div>
+    <nav class="sitenav" aria-label="Main">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="carrier.html">Carrier</a>
+      <a href="spec.html">Specification</a>
+      <a href="guide.html">Guide</a>
+      <a href="reference.html">Reference</a>
+      <a href="vectors.html">Test vectors</a>
+      <a href="decoder.html">Decoder</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
   </div>
-  <div class="band"><div class="wrap band-inner"><strong>Small payload. Huge canvas.</strong><span>Built for curious humans, collectors, creators, and communities.</span></div></div>
-  <section><div class="wrap"><div class="section-head"><div><div class="eyebrow">Why it matters</div><h2>Bitcoin can carry more than value.</h2></div><p>Every OP_RETURN begins as a compact onchain message. Compatible OP-20 services bring those messages together into recognizable token activity.</p></div><div class="grid"><article class="card"><span class="num">01 / EXPERIENCE</span><h3>Carry</h3><p>Place concise data in a Bitcoin transaction with OP_RETURN.</p></article><article class="card"><span class="num">02 / EXPERIENCE</span><h3>Coordinate</h3><p>Use OP-20 actions to express a token’s supply, mints, and movement.</p></article><article class="card"><span class="num">03 / EXPERIENCE</span><h3>Remember</h3><p>Follow the confirmed transaction and its interpreted history over time.</p></article></div></div></section>
-  <section><div class="wrap spotlight"><div class="eyebrow">The protocol in plain language</div><h2>A clear idea with an onchain heartbeat.</h2><p>Every OP_RETURN begins as a compact onchain message. Compatible OP-20 services bring those messages together into recognizable token activity.</p><div class="fact-list" style="margin-top:34px"><div class="fact"><strong>The carrier</strong><span>OP_RETURN stores provably unspendable data in a Bitcoin output.</span></div><div class="fact"><strong>The language</strong><span>OP-20 recognizes deploy, mint, and transfer actions.</span></div><div class="fact"><strong>The identity</strong><span>Tickers are compared without letter-case differences.</span></div><div class="fact"><strong>The view</strong><span>Compatible services interpret OP-20 activity from confirmed transactions.</span></div></div></div></section>
-  <section><div class="wrap"><div class="spotlight"><div class="eyebrow">Ready to explore?</div><h2>See what your next Bitcoin Universe moment can become.</h2><p>Explore supported experiences, connect a wallet when you are ready, and review every transaction before it leaves your hands.</p><div class="actions"><a class="button primary" href="https://inscribe.bitcoinuniverse.io/">Open Bitcoin Universe ↗</a><a class="button secondary" href="guide.html">See the journey</a></div></div></div></section>
+</header>
+
+<main id="main">
+
+<div class="channel">
+  <div class="wrap">
+    <p class="eyebrow">Bitcoin mainnet / data carrier output</p>
+    <h1>One carrier. Three protocols.</h1>
+    <p class="lede">OP_RETURN is a Bitcoin output that can never be spent. Nodes are allowed to forget it exists, yet the bytes stay in the block forever. Three separate protocols write into that channel, and they behave differently once they land.</p>
+    <div class="cta">
+      <a class="btn solid" href="carrier.html">How the carrier works</a>
+      <a class="btn" href="spec.html">Read the specification</a>
+      <a class="btn" href="decoder.html">Decode a script</a>
+    </div>
+  </div>
+</div>
+
+<section aria-labelledby="what">
+  <div class="wrap">
+    <h2 id="what">What this site documents</h2>
+    <p class="lead-col">Everything below is one Bitcoin output type and three independent protocols that share it. They are documented separately on purpose. Blurring them together is the most common source of wrong expectations about what an OP_RETURN token or name actually guarantees.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 300" role="img" aria-labelledby="fanout-title fanout-desc">
+        <title id="fanout-title">One OP_RETURN carrier feeding three independent protocol readers</title>
+        <desc id="fanout-desc">A single OP_RETURN output holding a UTF-8 payload is read by three separate indexers. The OP-20 reader accepts payloads tagged p equals op-20. The OP Names reader accepts payloads tagged p equals opns or a bare dotted name. The OP Inscriptions reader accepts payloads tagged p equals op-inscriptions plus a narrow historical envelope. Each reader keeps its own state and none of them can bless the others.</desc>
+        <rect x="16" y="24" width="230" height="66" rx="3" class="dg-op"/>
+        <text x="30" y="48" class="dg-text">OP_RETURN output</text>
+        <text x="30" y="66" class="dg-mute">6a &lt;push&gt; payload bytes</text>
+        <text x="30" y="82" class="dg-accent">value 0, provably unspendable</text>
+
+        <path d="M246 57 L300 57" class="dg-flow" marker-end="url(#a1)"/>
+        <path d="M300 57 L300 250" class="dg-flow"/>
+        <path d="M300 57 L340 57" class="dg-flow" marker-end="url(#a1)"/>
+        <path d="M300 154 L340 154" class="dg-flow" marker-end="url(#a1)"/>
+        <path d="M300 250 L340 250" class="dg-flow" marker-end="url(#a1)"/>
+
+        <rect x="344" y="24" width="400" height="66" rx="3" class="dg-box"/>
+        <text x="358" y="48" class="dg-text">OP-20 reader, registry id op_return</text>
+        <text x="358" y="66" class="dg-mute">accepts {"p":"op-20", ...} deploy, mint, transfer</text>
+        <text x="358" y="82" class="dg-accent">Core: read only, viewable, not tradeable</text>
+
+        <rect x="344" y="121" width="400" height="66" rx="3" class="dg-box"/>
+        <text x="358" y="145" class="dg-text">OP Names reader, registry id op_names</text>
+        <text x="358" y="163" class="dg-mute">accepts {"p":"opns", ...} or a bare label.namespace</text>
+        <text x="358" y="179" class="dg-accent">Core: read only, viewable, not tradeable</text>
+
+        <rect x="344" y="218" width="400" height="66" rx="3" class="dg-box"/>
+        <text x="358" y="242" class="dg-text">OP Inscriptions reader, id op_inscriptions</text>
+        <text x="358" y="260" class="dg-mute">accepts {"p":"op-inscriptions", ...} and media payloads</text>
+        <text x="358" y="276" class="dg-accent">Core: in app execution, list, buy, settle</text>
+
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor" style="fill:var(--accent)"/>
+          </marker>
+        </defs>
+      </svg>
+      <figcaption>The carrier is neutral. Meaning is assigned entirely by whichever reader claims the payload, and each reader keeps its own state.</figcaption>
+    </figure>
+
+    <div class="grid">
+      <article class="card">
+        <span class="tag">carrier</span>
+        <h3>OP_RETURN</h3>
+        <p>A Bitcoin output whose script starts with <code>OP_RETURN</code> (<code>0x6a</code>). Script execution fails immediately, so the output can never be spent. Because it can never be spent, a node may drop it from the UTXO set entirely.</p>
+        <p><a href="carrier.html">Mechanism, pruning and relay limits</a></p>
+      </article>
+      <article class="card">
+        <span class="tag">protocol / op_return</span>
+        <h3>OP-20</h3>
+        <p>A fungible token protocol written as a JSON object tagged <code>"p":"op-20"</code>. Three operations: deploy, mint and transfer. Balances are an indexer interpretation, not a Bitcoin consensus fact.</p>
+        <p><a href="spec.html#op20">OP-20 rules</a></p>
+      </article>
+      <article class="card">
+        <span class="tag">protocol / op_names</span>
+        <h3>OP Names</h3>
+        <p>Singleton name ownership. A name is <code>label.namespace</code> with exactly one literal dot. First valid registration wins permanently, and ownership moves between address custody and UTXO custody.</p>
+        <p><a href="spec.html#opnames">OP Names rules</a></p>
+      </article>
+      <article class="card">
+        <span class="tag">protocol / op_inscriptions</span>
+        <h3>OP Inscriptions</h3>
+        <p>Content written directly into OP_RETURN outputs, including media split across several outputs and reassembled. This is the only one of the three that Bitcoin Universe Core can actually trade.</p>
+        <p><a href="spec.html#opinscriptions">OP Inscriptions rules</a></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="support">
+  <div class="wrap">
+    <h2 id="support">What Bitcoin Universe products actually do</h2>
+    <p class="lead-col">These rows come from the Core capability snapshot generated from the marketplace protocol registry. Support recorded there is what the product code implements. It is not a promise that a protocol is enabled in production, which the status pages report separately.</p>
+
+    <div class="table-scroll">
+      <table>
+        <caption>Core marketplace surface, generated from bitcoinuniverseio/core at commit 15dd03b5</caption>
+        <thead>
+          <tr><th scope="col">Action</th><th scope="col">OP-20 (op_return)</th><th scope="col">OP Names (op_names)</th><th scope="col">OP Inscriptions (op_inscriptions)</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Availability</th><td>read-only</td><td>read-only</td><td class="yes">enabled</td></tr>
+          <tr><th scope="row">Mode</th><td>read-only</td><td>read-only</td><td class="yes">in-app-execution</td></tr>
+          <tr><th scope="row">view</th><td class="yes">yes</td><td class="yes">yes</td><td class="yes">yes</td></tr>
+          <tr><th scope="row">view-collection</th><td class="yes">yes</td><td class="yes">yes</td><td class="yes">yes</td></tr>
+          <tr><th scope="row">view-activity</th><td class="yes">yes</td><td class="yes">yes</td><td class="yes">yes</td></tr>
+          <tr><th scope="row">list</th><td class="no">no</td><td class="no">no</td><td class="yes">yes</td></tr>
+          <tr><th scope="row">unlist</th><td class="no">no</td><td class="no">no</td><td class="yes">yes</td></tr>
+          <tr><th scope="row">update-listing</th><td class="no">no</td><td class="no">no</td><td class="no">no</td></tr>
+          <tr><th scope="row">buy</th><td class="no">no</td><td class="no">no</td><td class="yes">yes</td></tr>
+          <tr><th scope="row">settle</th><td class="no">no</td><td class="no">no</td><td class="yes">yes</td></tr>
+          <tr><th scope="row">reconcile</th><td class="no">no</td><td class="no">no</td><td class="yes">yes</td></tr>
+          <tr><th scope="row">make-offer, accept-offer, cancel-offer, sell</th><td class="no">no</td><td class="no">no</td><td class="no">no</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="lead-col">Every unsupported action has a recorded reason. <a href="guide.html#matrix">The guide lists them in full</a>, including why an OP-20 buy is not declared supported even though the current interface can reach a broadcast step.</p>
+  </div>
+</section>
+
+<section aria-labelledby="facts">
+  <div class="wrap">
+    <h2 id="facts">Status at a glance</h2>
+    <div class="grid">
+      <article class="card">
+        <h3>Lifecycle</h3>
+        <p>Experimental. The OP Names raw block authority in the organisation's code is complete but deliberately not production enabled, and OP-20 marketplace mutations are retired.</p>
+      </article>
+      <article class="card">
+        <h3>Chain and network</h3>
+        <p>Bitcoin mainnet. All rules and vectors on this site describe mainnet behaviour.</p>
+      </article>
+      <article class="card">
+        <h3>Document version</h3>
+        <p>1.0.0, published 2026-09-01. See the <a href="changelog.html">changelog</a> for what changed and why.</p>
+      </article>
+      <article class="card">
+        <h3>Pending activity</h3>
+        <p>Reported as unavailable for OP-20 and OP Names. There is no exhaustive mempool activity feed behind either reader.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="entry">
+  <div class="wrap">
+    <h2 id="entry">Where to start</h2>
+    <ul class="lead-col">
+      <li><strong>New to the carrier:</strong> read <a href="carrier.html">the carrier page</a> for what OP_RETURN does to the UTXO set and how it differs from witness envelopes and unprunable outputs.</li>
+      <li><strong>Building an indexer:</strong> the <a href="spec.html">specification</a> gives numbered rules per protocol, and the <a href="vectors.html">test vectors</a> were produced by running the organisation's own parsers.</li>
+      <li><strong>Holding or moving assets:</strong> the <a href="guide.html">guide</a> walks through a transaction and states exactly which actions are supported.</li>
+      <li><strong>Debugging a transaction:</strong> paste a scriptPubKey into the <a href="decoder.html">decoder</a>.</li>
+    </ul>
+
+    <h3>Links</h3>
+    <ul class="lead-col">
+      <li>Source repository: <a href="https://github.com/bitcoinuniverseio/op-return">github.com/bitcoinuniverseio/op-return</a></li>
+      <li>Documentation portal: <a href="https://docs.bitcoinuniverse.io">docs.bitcoinuniverse.io</a></li>
+      <li>Security reporting: <a href="https://github.com/bitcoinuniverseio/op-return/security/advisories/new">private vulnerability report</a>, see <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">SECURITY.md</a></li>
+      <li>Machine readable summary of this site: <a href="llms.txt">llms.txt</a></li>
+    </ul>
+  </div>
+</section>
+
 </main>
-<footer><div class="wrap footer-inner"><span>OP_RETURN / OP-20 on Bitcoin</span><span>Presented by <a href="https://github.com/bitcoinuniverse/op-return">Bitcoin Universe</a></span></div></footer></body></html>
+
+<footer>
+  <div class="wrap">
+    <div class="meta">
+      <div><b>Owning repository</b> <span>bitcoinuniverseio/op-return</span></div>
+      <div><b>Source path</b> <span>/index.html</span></div>
+      <div><b>Document version</b> <span>1.0.0</span></div>
+      <div><b>Lifecycle</b> <span>experimental</span></div>
+      <div><b>Chain and network</b> <span>bitcoin, mainnet</span></div>
+      <div><b>Last verified</b> <span>2026-09-01</span></div>
+    </div>
+    <p class="links">
+      <a href="https://github.com/bitcoinuniverseio/op-return/edit/main/index.html">Edit this page on GitHub</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return">Repository</a>
+      <a href="https://docs.bitcoinuniverse.io">docs.bitcoinuniverse.io</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">Report a vulnerability</a>
+    </p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>
