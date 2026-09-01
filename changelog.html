@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Changelog for the OP_RETURN documentation</title>
+<meta name="description" content="Version history for the OP_RETURN, OP-20, OP Names and OP Inscriptions documentation, including what was corrected and what evidence each change was grounded in.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-return/changelog.html">
+<meta name="theme-color" content="#050907" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f7f5" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="OP_RETURN protocol documentation">
+<meta property="og:title" content="Changelog for the OP_RETURN documentation">
+<meta property="og:description" content="Version history and the evidence behind each correction.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-return/changelog.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-return/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="mark" href="index.html"><span class="glyph" aria-hidden="true">6a</span><span>OP_RETURN</span></a>
+    <div class="toolbar">
+      <div class="search">
+        <label class="vh" for="site-search">Search this site</label>
+        <input id="site-search" type="search" placeholder="Search, or press /" autocomplete="off" spellcheck="false" data-base="">
+        <ul id="search-results" class="results"></ul>
+      </div>
+      <button id="theme-toggle" class="themebtn" type="button" hidden>theme</button>
+    </div>
+    <nav class="sitenav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="carrier.html">Carrier</a>
+      <a href="spec.html">Specification</a>
+      <a href="guide.html">Guide</a>
+      <a href="reference.html">Reference</a>
+      <a href="vectors.html">Test vectors</a>
+      <a href="decoder.html">Decoder</a>
+      <a href="changelog.html" aria-current="page">Changelog</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<div class="channel">
+  <div class="wrap">
+    <p class="eyebrow">Version history</p>
+    <h1>What changed, and why.</h1>
+    <p class="lede">Documentation versions are separate from any product release. Each entry records the change and the evidence it was grounded in.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2 id="v1-0-0">1.0.0, 2026-09-01</h2>
+    <p class="lead-col">Complete rebuild. The previous version of this site described a single blended "OP_RETURN / OP-20" experience in marketing language and carried no specification, no test vectors, no reference material and no accurate support claims.</p>
+
+    <h3>Added</h3>
+    <ul class="lead-col">
+      <li>A dedicated <a href="carrier.html">carrier page</a> covering unspendability, UTXO set pruning, data carrier relay policy, and an honest comparison with witness envelopes and unprunable output techniques.</li>
+      <li>A <a href="spec.html">specification</a> with numbered rules in four groups: R-CAR for the carrier, R-20 for OP-20, R-NAME for OP Names and R-OPI for OP Inscriptions, plus a table of every rejection reason code.</li>
+      <li>A <a href="vectors.html">test vectors page</a> of 40 vectors, produced by running the organisation's own OP-20 payload reader, OP Names transaction parser and OP Inscriptions record decoder over real script hex and recording the outcomes verbatim.</li>
+      <li>A client side <a href="decoder.html">decoder</a> that identifies which of the three protocols claims a payload, decodes the fields, explains rejections, and reports size against the 83 byte default data carrier limit.</li>
+      <li>A <a href="reference.html">reference</a> covering terminology, per protocol confirmation, mempool and reorg semantics, fee and size, security considerations, limitations and an implementation checklist.</li>
+      <li>Client side search over every heading, a theme toggle, and a helpful 404 page.</li>
+    </ul>
+
+    <h3>Corrected</h3>
+    <ul class="lead-col">
+      <li><strong>Three protocols, not one.</strong> OP-20, OP Names and OP Inscriptions share a carrier and nothing else. Each now has its own rules, its own state model and its own capability row. The previous site presented only a blended OP_RETURN and OP-20 story.</li>
+      <li><strong>Support claims replaced with recorded truth.</strong> The support matrix now comes from the Core capability snapshot generated from the marketplace protocol registry, and every unsupported action carries its recorded reason. OP-20 and OP Names are read only. OP Inscriptions is the only one Core executes.</li>
+      <li><strong>Repository links fixed.</strong> The previous pages linked to <code>github.com/bitcoinuniverse</code>, which is not this organisation. All links now point at <code>bitcoinuniverseio</code>.</li>
+      <li><strong>Site base fixed.</strong> Absolute URLs previously pointed at <code>bitcoinuniverse.github.io</code>. The site base is <code>https://bitcoinuniverseio.github.io/op-return/</code>.</li>
+      <li><strong>Ticker comparison stated precisely.</strong> The previous claim was that tickers are compared without letter case differences. The reader in fact applies NFC normalisation, trims, then lowercases, and bounds the result at 400 UTF-8 bytes, rejecting path separators and the values <code>.</code> and <code>..</code>. See R-20-7.</li>
+      <li><strong>The OP-20 buy path is documented as unsupported.</strong> The recorded reason states that the current interface can reach a broadcast step before registration fails, which is why buy is not declared supported. That warning is now prominent rather than absent.</li>
+      <li><strong>OP Names is distinguished from SNS.</strong> The organisation separately indexes the Ordinals based Sats Names System under the marketplace protocol id <code>names</code>. It is a different protocol on a different carrier and must not be conflated with <code>op_names</code>.</li>
+      <li><strong>Style.</strong> The em dash character is no longer used anywhere in this repository, including titles, meta descriptions and Open Graph tags. The previous home page title contained one.</li>
+    </ul>
+
+    <h3>Evidence</h3>
+    <ul class="lead-col">
+      <li>Capability rows and recorded reasons: the Core ecosystem capability snapshot, generated from <code>bitcoinuniverseio/core</code> at source commit <code>15dd03b5</code>.</li>
+      <li>OP-20 payload rules: the OP-20 payload reader and its validation helpers in the organisation's OP-20 indexer.</li>
+      <li>OP Names identity, carrier and state machine rules: the OP Names authority parser, identity module and its authority document, which is colocated with the OP-20 indexer.</li>
+      <li>OP Inscriptions classification, assembly and durability rules: the OP Inscriptions record decoder and its indexer safety contract.</li>
+      <li>Funding safety: the OP-20 asset bearing outpoint screen in the Core marketplace service, which screens candidate funding outputs against Core's own transfer, domain and trade records, uses a bare transaction id key when a record has no output index, and fails closed when the screen cannot be read.</li>
+    </ul>
+
+    <h3>Known gaps</h3>
+    <ul class="lead-col">
+      <li>No mainnet transaction identifiers are cited as examples. Vectors are synthetic scripts run through the real parsers, which proves parser behaviour but not historical incidence.</li>
+      <li>The OP Inscriptions chunk grouping rules are documented at the level of the implemented algorithm. The set of accepted group identifier field names is not enumerated here because it is inferred from historical data rather than fixed by a published specification.</li>
+      <li>No creation surface is claimed for OP Names or OP Inscriptions, because none is recorded in the registry.</li>
+    </ul>
+
+    <h2 id="earlier">Earlier</h2>
+    <p class="lead-col">Before 1.0.0 this repository held a three page promotional site with no versioned specification. Those pages are preserved in the repository history.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="meta">
+      <div><b>Owning repository</b> <span>bitcoinuniverseio/op-return</span></div>
+      <div><b>Source path</b> <span>/changelog.html</span></div>
+      <div><b>Document version</b> <span>1.0.0</span></div>
+      <div><b>Lifecycle</b> <span>experimental</span></div>
+      <div><b>Chain and network</b> <span>bitcoin, mainnet</span></div>
+      <div><b>Last verified</b> <span>2026-09-01</span></div>
+    </div>
+    <p class="links">
+      <a href="https://github.com/bitcoinuniverseio/op-return/edit/main/changelog.html">Edit this page on GitHub</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return">Repository</a>
+      <a href="https://docs.bitcoinuniverse.io">docs.bitcoinuniverse.io</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">Report a vulnerability</a>
+    </p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>

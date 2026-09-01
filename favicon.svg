@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="OP_RETURN">
+  <rect width="32" height="32" rx="4" fill="#050907"/>
+  <rect x="3.5" y="3.5" width="25" height="25" rx="2.5" fill="none" stroke="#3ce491" stroke-width="1.5"/>
+  <text x="16" y="21" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12" font-weight="700" fill="#3ce491">6a</text>
+</svg>

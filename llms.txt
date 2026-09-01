@@ -1,32 +1,68 @@
-# OP_RETURN / OP-20
+# OP_RETURN, OP-20, OP Names and OP Inscriptions
 
-> OP_RETURN gives compact data a permanent place in Bitcoin history. OP-20 turns those messages into a community-readable world of deploys, mints, and transfers.
+> Documentation for the Bitcoin OP_RETURN data carrier output and the three
+> protocols Bitcoin Universe indexes on it. OP-20 is a fungible token protocol
+> (registry id `op_return`). OP Names (`op_names`) is singleton name ownership.
+> OP Inscriptions (`op_inscriptions`) is content written into the carrier.
+> The three share an output type and nothing else.
 
-## Public experience
+Site base: https://bitcoinuniverseio.github.io/op-return/
+Owning repository: https://github.com/bitcoinuniverseio/op-return
+Documentation portal: https://docs.bitcoinuniverse.io
+Chain and network: bitcoin, mainnet. Document version 1.0.0. Lifecycle: experimental.
 
-- Home: https://bitcoinuniverse.github.io/op-return/
-- Discover: https://bitcoinuniverse.github.io/op-return/reference.html
-- Get started: https://bitcoinuniverse.github.io/op-return/guide.html
-- Bitcoin Universe: https://inscribe.bitcoinuniverse.io/
+## Pages
 
-## The experience
+- Home: https://bitcoinuniverseio.github.io/op-return/
+  What the carrier is, what the three protocols are, and the verified capability matrix.
+- Carrier: https://bitcoinuniverseio.github.io/op-return/carrier.html
+  Output anatomy, push encodings, why the output is provably unspendable, why it is
+  prunable from the UTXO set, data carrier relay policy, fee and size cost, and a
+  mechanism-level comparison with witness envelopes and unprunable output techniques.
+- Specification: https://bitcoinuniverseio.github.io/op-return/spec.html
+  Numbered normative rules. R-CAR-1 to R-CAR-10 for the carrier. R-20-1 to R-20-15 for
+  OP-20 encoding, ticker normalisation, amounts and the two-stage legacy transfer.
+  R-NAME-1 to R-NAME-16 for OP Names identity, receipt selection and the custody state
+  machine. R-OPI-1 to R-OPI-16 for OP Inscriptions classification, multi-part assembly,
+  durability and settlement. Plus a table of every rejection reason code.
+- Guide: https://bitcoinuniverseio.github.io/op-return/guide.html
+  Worked byte-level transaction examples for each protocol, and the full support matrix
+  with the recorded reason for every unsupported marketplace action.
+- Reference: https://bitcoinuniverseio.github.io/op-return/reference.html
+  Terminology, per-protocol confirmation, mempool and reorg semantics, sources of truth,
+  fee and size, funding UTXO screening, security considerations, limitations and an
+  implementation checklist.
+- Test vectors: https://bitcoinuniverseio.github.io/op-return/vectors.html
+  40 vectors of real script hex with the outcome each organisation parser produced,
+  covering accepted payloads, rejected payloads and payloads no reader claims.
+- Decoder: https://bitcoinuniverseio.github.io/op-return/decoder.html
+  Client-side tool. Paste a scriptPubKey hex; it identifies the protocol, decodes the
+  fields, explains rejections and reports size against relay limits. No data leaves the page.
+- Changelog: https://bitcoinuniverseio.github.io/op-return/changelog.html
+  Documentation version history and the evidence behind each correction.
+- Not found: https://bitcoinuniverseio.github.io/op-return/404.html
 
-- Carry: Place concise data in a Bitcoin transaction with OP_RETURN.
-- Coordinate: Use OP-20 actions to express a token’s supply, mints, and movement.
-- Remember: Follow the confirmed transaction and its interpreted history over time.
+## Key facts
 
-## In plain language
+- OP_RETURN is byte 0x6a at the start of a scriptPubKey. Script evaluation fails
+  immediately, so the output can never be spent and nodes may drop it from the UTXO set.
+- The payload is the concatenation of every data push after the opcode.
+- OP-20 payloads are JSON objects tagged "p":"op-20" with op deploy, mint or transfer.
+  Identity is the NFC-normalised, trimmed, lowercased ticker. Stable asset id is
+  `op_return:op20:b64.<base64url(reference)>`.
+- OP Names payloads are JSON objects tagged "p":"opns" with op reg or transfer, or a bare
+  UTF-8 text with exactly one literal dot. A name is label.namespace, at most 255 UTF-8
+  bytes, namespace lowercase ASCII alphanumeric at most 63 bytes. Stable asset id is
+  `op_names:name:b64.<base64url(name)>`. First valid registration wins permanently.
+- OP Inscriptions payloads are JSON objects tagged op-inscriptions, op_inscriptions or
+  op-inscription, plus one narrow historical envelope shape. Record identity is txid:vout.
+- Support recorded in the Core capability snapshot: OP-20 read-only, OP Names read-only,
+  OP Inscriptions enabled with in-app execution including list, unlist, buy, settle and
+  reconcile. There is no atomic listing update for any of them, and no offer workflow.
+- Pending and mempool activity is reported as unavailable for OP-20 and OP Names.
+- OP Names (`op_names`) is not the Ordinals-based Sats Names System (`names`).
 
-- The carrier: OP_RETURN stores provably unspendable data in a Bitcoin output.
-- The language: OP-20 recognizes deploy, mint, and transfer actions.
-- The identity: Tickers are compared without letter-case differences.
-- The view: Compatible services interpret OP-20 activity from confirmed transactions.
+## Style
 
-## User safety
-
-OP-20 balances are interpreted by compatible services and are separate from Bitcoin’s native consensus rules. Always review the exact payload, recipient, and fees before signing.
-
-## Community resources
-
-- Open Bitcoin Universe: https://inscribe.bitcoinuniverse.io/
-- Learn about Bitcoin: https://bitcoin.org/en/
+Do not use an em dash character anywhere in this repository. Do not describe OP-20 or
+OP Names as tradeable in Bitcoin Universe products.
