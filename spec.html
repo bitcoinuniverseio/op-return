@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Specification: OP_RETURN carrier, OP-20, OP Names, OP Inscriptions</title>
+<meta name="description" content="Numbered normative rules for the OP_RETURN data carrier and the three protocols Bitcoin Universe indexes on it: OP-20 token encoding, OP Names identity and custody, and OP Inscriptions content records.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-return/spec.html">
+<meta name="theme-color" content="#050907" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f7f5" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="OP_RETURN protocol documentation">
+<meta property="og:title" content="Specification: OP_RETURN carrier, OP-20, OP Names, OP Inscriptions">
+<meta property="og:description" content="Numbered normative rules for the carrier and the three protocols that ride on it.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-return/spec.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-return/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="mark" href="index.html"><span class="glyph" aria-hidden="true">6a</span><span>OP_RETURN</span></a>
+    <div class="toolbar">
+      <div class="search">
+        <label class="vh" for="site-search">Search this site</label>
+        <input id="site-search" type="search" placeholder="Search, or press /" autocomplete="off" spellcheck="false" data-base="">
+        <ul id="search-results" class="results"></ul>
+      </div>
+      <button id="theme-toggle" class="themebtn" type="button" hidden>theme</button>
+    </div>
+    <nav class="sitenav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="carrier.html">Carrier</a>
+      <a href="spec.html" aria-current="page">Specification</a>
+      <a href="guide.html">Guide</a>
+      <a href="reference.html">Reference</a>
+      <a href="vectors.html">Test vectors</a>
+      <a href="decoder.html">Decoder</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<div class="channel">
+  <div class="wrap">
+    <p class="eyebrow">Specification 1.0.0 / bitcoin mainnet</p>
+    <h1>Normative rules</h1>
+    <p class="lede">Rules are grouped by scope and numbered so they can be cited. R-CAR applies to every payload on the carrier. R-20, R-NAME and R-OPI apply to one protocol each. Every rule reflects behaviour implemented in the organisation's own readers.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <nav class="toc" aria-label="On this page">
+      <h2>Rule groups</h2>
+      <ol>
+        <li><a href="#conventions">Conventions</a></li>
+        <li><a href="#carrier">R-CAR, the carrier</a></li>
+        <li><a href="#op20">R-20, OP-20</a></li>
+        <li><a href="#opnames">R-NAME, OP Names</a></li>
+        <li><a href="#opinscriptions">R-OPI, OP Inscriptions</a></li>
+        <li><a href="#invalid">Invalid conditions</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="conventions">Conventions</h2>
+    <p class="lead-col"><em>Must</em> and <em>must not</em> are absolute. <em>Rejected</em> means the reader refuses to apply the payload and records the reason; it never means the Bitcoin transaction is invalid. All three protocols are interpretations layered on top of Bitcoin, so a rejected payload is still a confirmed transaction.</p>
+    <p class="lead-col">Reason codes in <code>monospace</code> are the exact codes the readers emit. Two families appear: <code>protocol_mismatch</code> for a payload that does not obey the carrier or protocol shape, and <code>upstream_schema</code> for a payload whose shape is right but whose field values are not usable.</p>
+    <p class="lead-col">Amounts are written as whole atomic units. There is no decimals field on any of these three protocols; the registry records <code>decimals: none</code> for all of them.</p>
+  </div>
+</section>
+
+<section aria-labelledby="carrier">
+  <div class="wrap">
+    <h2 id="carrier">R-CAR, the carrier</h2>
+    <ol class="rules">
+      <li><span class="rid">R-CAR-1</span><div class="rbody"><p>A data carrier output is a transaction output whose scriptPubKey begins with <code>0x6a</code>, <code>OP_RETURN</code>. The OP Inscriptions scanner additionally accepts a leading <code>OP_0</code>, that is a script beginning <code>0x00 0x6a</code>. The OP-20 and OP Names readers do not: for them the first byte must be <code>0x6a</code>.</p></div></li>
+      <li><span class="rid">R-CAR-2</span><div class="rbody"><p>The payload is the concatenation, in script order, of the data pushed by every push operation after <code>OP_RETURN</code>. Push boundaries carry no meaning to the protocols; a payload split across two pushes decodes identically to the same bytes in one push.</p></div></li>
+      <li><span class="rid">R-CAR-3</span><div class="rbody"><p>Recognised push encodings are <code>OP_0</code> (<code>0x00</code>, zero bytes), a direct push (<code>0x01</code> to <code>0x4b</code>, where the opcode is the length), <code>OP_PUSHDATA1</code> (<code>0x4c</code>, one length byte), <code>OP_PUSHDATA2</code> (<code>0x4d</code>, two little endian length bytes) and <code>OP_PUSHDATA4</code> (<code>0x4e</code>, four little endian length bytes).</p></div></li>
+      <li><span class="rid">R-CAR-4</span><div class="rbody"><p>Any other opcode inside the carrier is fatal for OP-20 and OP Names: the carrier is rejected with <code>protocol_mismatch</code> and no payload is produced. The OP Inscriptions scanner instead skips the unrecognised byte and continues, because its job is to catalogue historical bytes rather than to authorise a state change.</p></div></li>
+      <li><span class="rid">R-CAR-5</span><div class="rbody"><p>A push whose declared length runs past the end of the script is rejected. A truncated <code>PUSHDATA1</code>, <code>PUSHDATA2</code> or <code>PUSHDATA4</code> length prefix is rejected for the same reason.</p></div></li>
+      <li><span class="rid">R-CAR-6</span><div class="rbody"><p>The OP Names reader refuses an assembled payload larger than 4096 bytes and records <code>payload_too_large</code>. This is an implementation safety bound, not a network rule.</p></div></li>
+      <li><span class="rid">R-CAR-7</span><div class="rbody"><p>OP-20 and OP Names payloads must decode as strict UTF-8. Bytes that are not valid UTF-8 cannot carry either protocol. OP Names records <code>invalid_utf8</code> evidence only when the bytes plausibly attempted the protocol, that is when they contain the byte <code>0x2e</code> or the Latin-1 reading contains <code>opns</code>. Otherwise the output is ignored entirely.</p></div></li>
+      <li><span class="rid">R-CAR-8</span><div class="rbody"><p>A carrier output must carry zero satoshis. Value assigned to it is destroyed and is not recoverable by any means.</p></div></li>
+      <li><span class="rid">R-CAR-9</span><div class="rbody"><p>For the widest relay, keep the entire scriptPubKey at 83 bytes or fewer and use exactly one carrier output per transaction. This is node policy, not consensus: a larger or repeated carrier is still valid if mined. See <a href="carrier.html#relay">relay and standardness</a>.</p></div></li>
+      <li><span class="rid">R-CAR-10</span><div class="rbody"><p>The carrier assigns no ownership. Where a protocol has an owner, that owner comes from a different, spendable output of the same transaction.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section aria-labelledby="op20">
+  <div class="wrap">
+    <h2 id="op20">R-20, OP-20</h2>
+    <p class="lead-col">Registry id <code>op_return</code>, display name <strong>OP-20</strong>, aliases <code>op-return</code>, <code>op20</code>, <code>op-20</code>. Ownership model recorded as hybrid, because a balance can be held by an address and also be pinned to a specific transfer UTXO.</p>
+
+    <h3>Encoding</h3>
+    <div class="frame-scroll">
+      <div class="frame">
+        <div class="frame-row">
+          <div class="fld op"><span class="off">byte 0</span><span class="val">6a</span><span class="nm">OP_RETURN</span></div>
+          <div class="fld"><span class="off">byte 1</span><span class="val">34</span><span class="nm">push 52 bytes</span></div>
+          <div class="fld pay"><span class="off">bytes 2..53</span><span class="val">{"p":"op-20","op":"mint","tick":"PIPE","amt":"1000"}</span><span class="nm">UTF-8 JSON object</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="legend">Full script hex: <code class="hex">6a347b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231303030227d</code></p>
+
+    <ol class="rules">
+      <li><span class="rid">R-20-1</span><div class="rbody"><p>The payload must begin with a JSON object. Only whitespace may precede the opening brace; any other leading text means the payload is not OP-20. The reader takes the first complete top level object and keeps whatever follows as an uninterpreted suffix.</p></div></li>
+      <li><span class="rid">R-20-2</span><div class="rbody"><p>A transaction must contain exactly one OP-20 carrier. Two OP-20 payloads in one transaction are rejected with <code>protocol_mismatch</code>. Other OP_RETURN outputs that are not OP-20 do not interfere.</p></div></li>
+      <li><span class="rid">R-20-3</span><div class="rbody"><p>The field <code>p</code> must equal exactly <code>"op-20"</code>. Any other value, including <code>"op20"</code>, means the payload is not OP-20 and is ignored rather than rejected.</p></div></li>
+      <li><span class="rid">R-20-4</span><div class="rbody"><p>The field <code>op</code>, compared case insensitively, must be <code>deploy</code>, <code>mint</code> or <code>transfer</code>. Anything else is rejected with <code>protocol_mismatch</code>.</p></div></li>
+      <li><span class="rid">R-20-5</span><div class="rbody"><p>Allowed fields are exact per operation. <code>deploy</code>: <code>p, op, tick, max, lim, add</code>. <code>mint</code>: <code>p, op, tick, amt, add</code>. <code>transfer</code>: <code>p, op, tick, amt, add</code>. Any other field is rejected with <code>upstream_schema</code>. There is no comment, memo or extension field.</p></div></li>
+      <li><span class="rid">R-20-6</span><div class="rbody"><p>A repeated top level key is rejected with <code>protocol_mismatch</code>, before <code>JSON.parse</code> silently keeps the last value. This is checked textually against the raw payload.</p></div></li>
+      <li><span class="rid">R-20-7</span><div class="rbody"><p>The token reference is derived from <code>tick</code> by applying NFC normalisation, trimming, then lowercasing. The value must round trip as UTF-8, must be at most 400 bytes before and after normalisation, must not contain <code>/</code> or <code>\</code>, and must not be <code>.</code> or <code>..</code>. The ticker as written is preserved separately for display and is bounded at 191 characters.</p></div></li>
+      <li><span class="rid">R-20-8</span><div class="rbody"><p>The stable asset identity is <code>op_return:op20:b64.&lt;base64url(reference)&gt;</code>, where the reference is the exact normalised lowercase text from R-20-7. An identity whose decoded reference is not already in that exact form is an alias and is rejected.</p></div></li>
+      <li><span class="rid">R-20-9</span><div class="rbody"><p><code>deploy</code> requires <code>max</code> and <code>lim</code>. <code>max</code> must match <code>^(0|[1-9]\d{0,77})(\.\d{1,77})?$</code> and its whole part must be positive; a fractional part is truncated and the coercion <code>legacy-mysql-bigint-truncation</code> is recorded. <code>lim</code> must be a positive whole atomic amount with no fraction at all.</p></div></li>
+      <li><span class="rid">R-20-10</span><div class="rbody"><p><code>mint</code> and <code>transfer</code> require <code>amt</code>. It must match <code>^(0|[1-9]\d{0,77})(\.(0{1,77}))?$</code>: only an all zero fraction is tolerated, and it is truncated with the coercion <code>legacy-zero-fraction-truncated-by-mysql-bigint</code>. A non zero fraction is rejected with <code>upstream_schema</code>. The resulting amount must be positive; zero is rejected except in a specific reconciliation case where a zero amount transfer is explicitly permitted.</p></div></li>
+      <li><span class="rid">R-20-11</span><div class="rbody"><p><code>add</code> is an optional explicit recipient address. Its presence changes the shape of a transfer, see R-20-12.</p></div></li>
+      <li><span class="rid">R-20-12</span><div class="rbody"><p>A transfer with <code>add</code> is a single direct balance changing event. A legacy transfer without <code>add</code> is two stage: creating the transfer UTXO publishes a protocol operation that changes no balance, and spending that UTXO later publishes the balance changing transfer. An indexer that collapses the two stages will report balances that never existed.</p></div></li>
+      <li><span class="rid">R-20-13</span><div class="rbody"><p>Bytes after the first JSON object are retained as a suffix, with their byte length and text recorded. They are not protocol fields and must not be interpreted.</p></div></li>
+      <li><span class="rid">R-20-14</span><div class="rbody"><p>Marketplace sale and purchase records are emitted separately from balance movement, with no wallet deltas of their own, because the associated transfer settlement already changed the balances.</p></div></li>
+      <li><span class="rid">R-20-15</span><div class="rbody"><p>An OP-20 balance is an indexer interpretation. Bitcoin consensus knows nothing about it. Two indexers that disagree about a payload will disagree about the balance, and neither is wrong at the Bitcoin layer.</p></div></li>
+    </ol>
+
+    <figure>
+      <svg viewBox="0 0 760 200" role="img" aria-labelledby="op20-title op20-desc">
+        <title id="op20-title">OP-20 transfer in one stage and in two stages</title>
+        <desc id="op20-desc">Two rows. The top row shows a modern transfer: one transaction carries an OP_RETURN payload including an explicit add field, and the balance moves immediately. The bottom row shows a legacy transfer without add: the first transaction creates a transfer UTXO and publishes a protocol operation with no balance change, and a second transaction that spends that UTXO publishes the balance changing transfer.</desc>
+        <text x="16" y="22" class="dg-accent">TRANSFER WITH add</text>
+        <rect x="16" y="32" width="200" height="46" rx="3" class="dg-op"/>
+        <text x="28" y="52" class="dg-text">tx: payload has add</text>
+        <text x="28" y="68" class="dg-mute">one carrier, one intent</text>
+        <path d="M216 55 L296 55" class="dg-flow" marker-end="url(#a4)"/>
+        <rect x="300" y="32" width="230" height="46" rx="3" class="dg-box"/>
+        <text x="312" y="52" class="dg-text">balance moves now</text>
+        <text x="312" y="68" class="dg-mute">one direct transfer event</text>
+
+        <text x="16" y="118" class="dg-accent">LEGACY TRANSFER WITHOUT add</text>
+        <rect x="16" y="128" width="200" height="46" rx="3" class="dg-op"/>
+        <text x="28" y="148" class="dg-text">tx A: creates transfer UTXO</text>
+        <text x="28" y="164" class="dg-mute">protocol operation, no delta</text>
+        <path d="M216 151 L296 151" class="dg-flow" marker-end="url(#a4)"/>
+        <rect x="300" y="128" width="230" height="46" rx="3" class="dg-op"/>
+        <text x="312" y="148" class="dg-text">tx B: spends that UTXO</text>
+        <text x="312" y="164" class="dg-mute">balance changing transfer</text>
+        <path d="M530 151 L610 151" class="dg-flow" marker-end="url(#a4)"/>
+        <rect x="614" y="128" width="130" height="46" rx="3" class="dg-box"/>
+        <text x="626" y="155" class="dg-text">balance moves</text>
+        <defs>
+          <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/>
+          </marker>
+        </defs>
+      </svg>
+      <figcaption>The two shapes of an OP-20 transfer. The legacy shape is the reason a pending transfer UTXO must never be spent as ordinary change.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section aria-labelledby="opnames">
+  <div class="wrap">
+    <h2 id="opnames">R-NAME, OP Names</h2>
+    <p class="lead-col">Registry id <code>op_names</code>, display name <strong>OP Names</strong>, aliases <code>op-names</code>, <code>opnames</code>. Ownership model UTXO. A name is a singleton ownership position, never a fungible balance.</p>
+
+    <div class="note warn">
+      <strong>OP Names is not SNS</strong>
+      <p>The organisation also indexes the Ordinals based Sats Names System under the separate marketplace protocol id <code>names</code>. That protocol originated outside this organisation, uses inscriptions rather than OP_RETURN, and has its own rules. Do not resolve an <code>op_names</code> identity through an SNS index, or the reverse.</p>
+    </div>
+
+    <h3>Recognised carriers</h3>
+    <ol class="rules">
+      <li><span class="rid">R-NAME-1</span><div class="rbody"><p>Three carrier shapes are recognised. Strict JSON <code>{"p":"opns","op":"reg","name":...}</code>, optionally with <code>add</code>. Strict JSON <code>{"p":"opns","op":"transfer","name":...}</code>. Legacy raw UTF-8 registration text containing exactly one literal dot.</p></div></li>
+      <li><span class="rid">R-NAME-2</span><div class="rbody"><p>Allowed JSON fields are exact. <code>reg</code>: <code>p, op, name, add</code>. <code>transfer</code>: <code>p, op, name</code>. Any other field is <code>unknown_field</code>. A repeated top level key is rejected. <code>name</code> must be a string. <code>add</code>, when present on a <code>reg</code>, must be a string of at most 128 characters, otherwise <code>invalid_explicit_address</code>.</p></div></li>
+      <li><span class="rid">R-NAME-3</span><div class="rbody"><p>The transaction must contain exactly one OP_RETURN output and exactly one recognised carrier. If either count differs the result is <code>ambiguous_op_return</code> and nothing is applied. This is stricter than OP-20: an unrelated second data output is enough to void the whole transaction for OP Names.</p></div></li>
+      <li><span class="rid">R-NAME-4</span><div class="rbody"><p>An identity is derived from the name as follows. The value must be valid UTF-8. It must contain no C0 or DEL control characters, no <code>/</code> or <code>\</code>, and no Unicode dot lookalike from the set <code>U+00B7 U+0387 U+2022 U+2024 U+2027 U+2219 U+22C5 U+3002 U+30FB U+FE52 U+FF0E U+FF61 U+FF65</code>. Apply NFC, trim, then lowercase. The result must be at most 255 UTF-8 bytes and must split on exactly one literal dot into a non empty label and a non empty namespace. The namespace must match <code>^[a-z0-9]+$</code> and be at most 63 UTF-8 bytes.</p></div></li>
+      <li><span class="rid">R-NAME-5</span><div class="rbody"><p>The stable asset identity is <code>op_names:name:b64.&lt;base64url(normalised UTF-8 name)&gt;</code>. Non exact base64url encodings and identities that do not round trip are rejected.</p></div></li>
+      <li><span class="rid">R-NAME-6</span><div class="rbody"><p>Plain text with zero literal dots, or with two or more, is not an OP Names carrier at all. It is not recorded as evidence and is not an invalid registration; the reader simply does not claim it.</p></div></li>
+      <li><span class="rid">R-NAME-7</span><div class="rbody"><p>A recognised payload with an unusable identity is stored as unapplied evidence with an explicit reason and never becomes an asset. Invalid rows are never normalised into an identity that could shadow a valid first registration.</p></div></li>
+    </ol>
+
+    <h3>State transitions</h3>
+    <ol class="rules">
+      <li><span class="rid">R-NAME-8</span><div class="rbody"><p>The first valid registration of a name wins permanently. A later registration of the same name is recorded as an audit event with reason <code>first_registration_already_exists</code> and changes nothing.</p></div></li>
+      <li><span class="rid">R-NAME-9</span><div class="rbody"><p>A registration carrying a valid <code>add</code> enters address custody with that address as owner.</p></div></li>
+      <li><span class="rid">R-NAME-10</span><div class="rbody"><p>A registration without <code>add</code> derives its owner from the receipt output. The receipt is output 0 when the OP_RETURN sits at an index greater than 0, and output 1 otherwise. The derived owner is in address custody.</p></div></li>
+      <li><span class="rid">R-NAME-11</span><div class="rbody"><p>An explicit <code>transfer</code> is valid only when the name is currently in address custody <em>and</em> the previous output spent by input 0 belongs to exactly the current owner. The previous transaction is fetched only when this proof is needed.</p></div></li>
+      <li><span class="rid">R-NAME-12</span><div class="rbody"><p>An authorised explicit transfer moves the name into UTXO custody, located at its receipt outpoint.</p></div></li>
+      <li><span class="rid">R-NAME-13</span><div class="rbody"><p>A name in UTXO custody follows a spend of its exact current outpoint to output 0 of the spending transaction. Several names can follow the same consolidating output and remain distinct identities.</p></div></li>
+      <li><span class="rid">R-NAME-14</span><div class="rbody"><p>A missing, OP_RETURN, unspendable or ownerless receipt or follow output burns the name explicitly. A burned name remains a valid historical registration, has no owner and no current outpoint, and is not transferable.</p></div></li>
+      <li><span class="rid">R-NAME-15</span><div class="rbody"><p>Valid names have perpetual protocol validity. No expiry rule exists. Pending and mempool coverage is reported as unavailable.</p></div></li>
+      <li><span class="rid">R-NAME-16</span><div class="rbody"><p>OP Names state is independent. It is never resolved through the <code>op_return</code> or <code>op20</code> account authority, and it lives in dedicated storage sourced from sequential raw Bitcoin blocks rather than from legacy token tables.</p></div></li>
+    </ol>
+
+    <figure>
+      <svg viewBox="0 0 760 260" role="img" aria-labelledby="name-title name-desc">
+        <title id="name-title">OP Names custody state machine</title>
+        <desc id="name-desc">A name starts unregistered. A valid registration moves it to address custody, either from an explicit add field or from the receipt output. An authorised explicit transfer moves it from address custody to UTXO custody at the receipt outpoint. A name in UTXO custody follows further spends of its exact outpoint to output zero and stays in UTXO custody. From either custody state, a missing, unspendable or ownerless receipt output burns the name, which is a terminal state with no owner.</desc>
+
+        <rect x="16" y="100" width="130" height="52" rx="3" class="dg-box"/>
+        <text x="30" y="124" class="dg-text">unregistered</text>
+        <text x="30" y="140" class="dg-mute">no first write yet</text>
+
+        <path d="M146 126 L216 126" class="dg-flow" marker-end="url(#a5)"/>
+        <text x="150" y="116" class="dg-accent">R-NAME-8/9/10</text>
+
+        <rect x="220" y="100" width="160" height="52" rx="3" class="dg-op"/>
+        <text x="234" y="124" class="dg-text">address custody</text>
+        <text x="234" y="140" class="dg-mute">owner is an address</text>
+
+        <path d="M380 126 L470 126" class="dg-flow" marker-end="url(#a5)"/>
+        <text x="384" y="116" class="dg-accent">R-NAME-11/12</text>
+        <text x="384" y="146" class="dg-mute">authorised transfer</text>
+
+        <rect x="474" y="100" width="170" height="52" rx="3" class="dg-op"/>
+        <text x="488" y="124" class="dg-text">UTXO custody</text>
+        <text x="488" y="140" class="dg-mute">owner is an outpoint</text>
+
+        <path d="M559 100 C559 60, 680 60, 680 126 C680 180, 600 180, 566 152" class="dg-flow" marker-end="url(#a5)"/>
+        <text x="600" y="56" class="dg-accent">R-NAME-13, follows output 0</text>
+
+        <path d="M300 152 L300 214" class="dg-dash" marker-end="url(#a6)"/>
+        <path d="M540 152 L540 200 L390 200 L390 214" class="dg-dash" marker-end="url(#a6)"/>
+        <rect x="250" y="216" width="200" height="40" rx="3" class="dg-box"/>
+        <text x="264" y="234" class="dg-text">burned, terminal</text>
+        <text x="264" y="249" class="dg-mute">R-NAME-14, no owner</text>
+
+        <defs>
+          <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/>
+          </marker>
+          <marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" style="fill:var(--line-strong)"/>
+          </marker>
+        </defs>
+      </svg>
+      <figcaption>Custody, not balance. Every arrow is a rule, and the burn arrows are reached by an output that cannot hold an owner.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section aria-labelledby="opinscriptions">
+  <div class="wrap">
+    <h2 id="opinscriptions">R-OPI, OP Inscriptions</h2>
+    <p class="lead-col">Registry id <code>op_inscriptions</code>, display name <strong>OP Inscriptions</strong>, aliases <code>op-inscriptions</code>, <code>opinscriptions</code>. Ownership model UTXO. This is the only protocol on this carrier that Bitcoin Universe Core executes rather than merely displays.</p>
+
+    <ol class="rules">
+      <li><span class="rid">R-OPI-1</span><div class="rbody"><p>A candidate output has a script beginning <code>0x6a</code> or <code>0x00 0x6a</code>. The record identity is <code>txid:vout</code>.</p></div></li>
+      <li><span class="rid">R-OPI-2</span><div class="rbody"><p>The payload is the concatenation of every decoded push. Small number opcodes <code>OP_1</code> to <code>OP_16</code> contribute their numeric value as a single byte. If no push decodes at all, the raw bytes following <code>OP_RETURN</code> are used as the payload.</p></div></li>
+      <li><span class="rid">R-OPI-3</span><div class="rbody"><p>A payload is treated as text when its UTF-8 reading contains no replacement character and at least 75 percent of its characters are printable, counting tab, newline and carriage return as printable. NUL bytes are stripped first.</p></div></li>
+      <li><span class="rid">R-OPI-4</span><div class="rbody"><p>A payload is an OP inscription when its JSON tag, read from <code>p</code>, <code>protocol</code> or <code>proto</code> and compared case insensitively, is <code>op-inscriptions</code>, <code>op_inscriptions</code> or <code>op-inscription</code>. The operation is read from <code>op</code>, <code>operation</code> or <code>action</code> and defaults to <code>inscribe</code>.</p></div></li>
+      <li><span class="rid">R-OPI-5</span><div class="rbody"><p>One historical envelope is also accepted: a JSON object whose keys are drawn entirely from <code>add</code>, <code>address</code>, <code>addr</code>, <code>to</code>, <code>receiver</code>, <code>collection</code>, and which yields a non empty address. This shape predates the explicit protocol tag. Arbitrary JSON in an OP_RETURN is not an OP inscription.</p></div></li>
+      <li><span class="rid">R-OPI-6</span><div class="rbody"><p>The scanner also labels foreign payloads for catalogue purposes: <code>op-20</code> and <code>op20</code> as OP-20, <code>op-names</code>, <code>op_names</code> and <code>opname</code> as OP Names, <code>mezcal</code> as Mezcal, and bare text matching <code>^[a-z0-9][a-z0-9_-]{0,63}\.[a-z0-9_-]{1,24}$</code> as OP Names. These labels are catalogue metadata only. They do not make the payload an OP inscription, and they do not override the owning protocol's own reader, whose rules are stricter. A name that this label accepts may still be invalid under R-NAME-4.</p></div></li>
+      <li><span class="rid">R-OPI-7</span><div class="rbody"><p>Media content is recognised by sniffing the payload bytes and, where declared, an explicit MIME type. A recognised image, audio, video, PDF, text or JSON payload becomes renderable inscription content.</p></div></li>
+      <li><span class="rid">R-OPI-8</span><div class="rbody"><p>Content larger than one carrier may be split across several OP_RETURN records. Chunks are grouped by a shared group identifier and a declared total. Index fields named <code>part</code>, <code>partNumber</code>, <code>chunkNumber</code>, <code>seq</code> or <code>n</code> are treated as one based and converted; an index equal to the total is also treated as one based.</p></div></li>
+      <li><span class="rid">R-OPI-9</span><div class="rbody"><p>A group assembles only when every index from 0 to total minus 1 is present exactly once. A partial group is never assembled and never rendered. Chunk data is joined in index order and decoded as hex, base64 or text according to the declared chunk encoding.</p></div></li>
+      <li><span class="rid">R-OPI-10</span><div class="rbody"><p>An assembled record takes the identity <code>assembled:&lt;groupId&gt;:&lt;total&gt;</code> with operation <code>assembled-media</code>, and records the identifiers of every source part. The individual parts remain available as their own records.</p></div></li>
+    </ol>
+
+    <h3>Durability and marketplace state</h3>
+    <ol class="rules">
+      <li><span class="rid">R-OPI-11</span><div class="rbody"><p>Each block, its deterministic records and the indexing cursor commit in one database transaction. New rows are provisional, and finality advances monotonically only after the configured confirmation count.</p></div></li>
+      <li><span class="rid">R-OPI-12</span><div class="rbody"><p>Every block is checked against a fresh height to hash lookup and its expected parent. Outside an isolated test network an independently hosted verifier must agree on each height to hash result before the block reaches storage.</p></div></li>
+      <li><span class="rid">R-OPI-13</span><div class="rbody"><p>Restart reconciliation finds a common ancestor before any mutation. A bounded provisional suffix is deleted and replayed. A deep or already final divergence persists a halted state instead of changing authoritative rows, and that halt is never cleared automatically.</p></div></li>
+      <li><span class="rid">R-OPI-14</span><div class="rbody"><p>A marketplace fill is recorded only after the exact receipt outpoint spend, the buyer receipt output and the seller payout are all confirmed on chain. The settlement confirmation minimum is 1.</p></div></li>
+      <li><span class="rid">R-OPI-15</span><div class="rbody"><p>The reconciler reopens receipts that are unspent on the active chain and marks conflicting spends stale. This is the only one of the three protocols with automatic lifecycle reconciliation.</p></div></li>
+      <li><span class="rid">R-OPI-16</span><div class="rbody"><p>There is no atomic listing update. Changing the terms of a listing requires cancelling it and listing again.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section aria-labelledby="invalid">
+  <div class="wrap">
+    <h2 id="invalid">Invalid conditions</h2>
+    <p class="lead-col">Collected reason codes and what each one means for state. None of these make the Bitcoin transaction invalid.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Rejection reasons emitted by the readers</caption>
+        <thead><tr><th scope="col">Reason</th><th scope="col">Protocol</th><th scope="col">Trigger</th><th scope="col">Effect on state</th></tr></thead>
+        <tbody>
+          <tr><td><code>protocol_mismatch</code></td><td>OP-20, OP Names</td><td>malformed carrier, non push opcode, truncated push, unsupported operation, repeated field</td><td>nothing applied</td></tr>
+          <tr><td><code>upstream_schema</code></td><td>OP-20</td><td>unknown field, unusable ticker, amount outside the accepted numeric form</td><td>nothing applied</td></tr>
+          <tr><td><code>payload_too_large</code></td><td>OP Names</td><td>assembled payload over 4096 bytes</td><td>evidence only</td></tr>
+          <tr><td><code>invalid_utf8</code></td><td>OP Names</td><td>payload is not valid UTF-8 but plausibly attempted the protocol</td><td>evidence only</td></tr>
+          <tr><td><code>malformed_json</code></td><td>OP Names</td><td>payload mentions opns but is not valid JSON</td><td>evidence only</td></tr>
+          <tr><td><code>unknown_field</code></td><td>OP Names</td><td>a field outside the allowed set for the operation</td><td>evidence only</td></tr>
+          <tr><td><code>unsupported_operation</code></td><td>OP Names</td><td><code>op</code> is neither <code>reg</code> nor <code>transfer</code></td><td>evidence only</td></tr>
+          <tr><td><code>missing_name</code></td><td>OP Names</td><td><code>name</code> is absent or not a string</td><td>evidence only</td></tr>
+          <tr><td><code>invalid_explicit_address</code></td><td>OP Names</td><td><code>add</code> is not a string of at most 128 characters</td><td>evidence only</td></tr>
+          <tr><td><code>invalid_op_name</code></td><td>OP Names</td><td>identity fails R-NAME-4</td><td>evidence only</td></tr>
+          <tr><td><code>ambiguous_op_return</code></td><td>OP Names</td><td>more than one OP_RETURN output or more than one recognised carrier</td><td>nothing applied</td></tr>
+          <tr><td><code>first_registration_already_exists</code></td><td>OP Names</td><td>the name was already registered by an earlier valid write</td><td>audit event only</td></tr>
+          <tr><td><code>missing_receipt_output</code></td><td>OP Names</td><td>the derived receipt index does not exist</td><td>name burned</td></tr>
+          <tr><td><code>unspendable_receipt_output</code></td><td>OP Names</td><td>the receipt output is itself an OP_RETURN</td><td>name burned</td></tr>
+          <tr><td><code>receipt_owner_unavailable</code></td><td>OP Names</td><td>no single address can be derived from the receipt output</td><td>name burned</td></tr>
+          <tr><td><code>missing_follow_output</code></td><td>OP Names</td><td>a UTXO custody spend has no output 0</td><td>name burned</td></tr>
+          <tr><td><code>unspendable_follow_output</code></td><td>OP Names</td><td>output 0 of the spend is an OP_RETURN</td><td>name burned</td></tr>
+          <tr><td><code>follow_owner_unavailable</code></td><td>OP Names</td><td>output 0 of the spend has no derivable address</td><td>name burned</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead-col">Every one of these outcomes is reproduced with real script hex on the <a href="vectors.html">test vectors page</a>.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="meta">
+      <div><b>Owning repository</b> <span>bitcoinuniverseio/op-return</span></div>
+      <div><b>Source path</b> <span>/spec.html</span></div>
+      <div><b>Document version</b> <span>1.0.0</span></div>
+      <div><b>Lifecycle</b> <span>experimental</span></div>
+      <div><b>Chain and network</b> <span>bitcoin, mainnet</span></div>
+      <div><b>Last verified</b> <span>2026-09-01</span></div>
+    </div>
+    <p class="links">
+      <a href="https://github.com/bitcoinuniverseio/op-return/edit/main/spec.html">Edit this page on GitHub</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return">Repository</a>
+      <a href="https://docs.bitcoinuniverse.io">docs.bitcoinuniverse.io</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">Report a vulnerability</a>
+    </p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>
