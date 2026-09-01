@@ -4,7 +4,7 @@
   "name": "OP_RETURN and OP-20",
   "classification": "protocol",
   "repository": "bitcoinuniverseio/op-return",
-  "documentationUrl": "https://docs.bitcoinuniverse.io/protocols/op-return/",
+  "documentationUrl": "https://docs.bitcoinuniverse.io/protocols/op_return/",
   "docsRoot": ".",
   "sourceRef": "main",
   "lifecycle": "experimental",
