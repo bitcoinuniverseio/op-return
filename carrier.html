@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The OP_RETURN carrier: unspendable, prunable, relay bounded</title>
+<meta name="description" content="How OP_RETURN actually works: why the output is provably unspendable, why nodes may drop it from the UTXO set, what the data carrier relay limits do, and how it differs from witness envelopes and unprunable Stamps outputs.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-return/carrier.html">
+<meta name="theme-color" content="#050907" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f7f5" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="OP_RETURN protocol documentation">
+<meta property="og:title" content="The OP_RETURN carrier: unspendable, prunable, relay bounded">
+<meta property="og:description" content="Why OP_RETURN outputs can never be spent, why nodes may drop them from the UTXO set, and how they differ from witness envelopes and unprunable outputs.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-return/carrier.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-return/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="mark" href="index.html"><span class="glyph" aria-hidden="true">6a</span><span>OP_RETURN</span></a>
+    <div class="toolbar">
+      <div class="search">
+        <label class="vh" for="site-search">Search this site</label>
+        <input id="site-search" type="search" placeholder="Search, or press /" autocomplete="off" spellcheck="false" data-base="">
+        <ul id="search-results" class="results"></ul>
+      </div>
+      <button id="theme-toggle" class="themebtn" type="button" hidden>theme</button>
+    </div>
+    <nav class="sitenav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="carrier.html" aria-current="page">Carrier</a>
+      <a href="spec.html">Specification</a>
+      <a href="guide.html">Guide</a>
+      <a href="reference.html">Reference</a>
+      <a href="vectors.html">Test vectors</a>
+      <a href="decoder.html">Decoder</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<div class="channel">
+  <div class="wrap">
+    <p class="eyebrow">The carrier itself</p>
+    <h1>A broadcast nobody can spend.</h1>
+    <p class="lede">OP_RETURN is the one place in a Bitcoin transaction where you can put bytes and honestly tell the network you are not asking it to remember them as money. Understanding what that costs and what it does not cost is the whole point of this page.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <nav class="toc" aria-label="On this page">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#anatomy">Output anatomy</a></li>
+        <li><a href="#unspendable">Provably unspendable</a></li>
+        <li><a href="#prunable">Prunable from the UTXO set</a></li>
+        <li><a href="#relay">Relay and standardness</a></li>
+        <li><a href="#cost">What it costs</a></li>
+        <li><a href="#compare">Compared with other carriers</a></li>
+        <li><a href="#pitfalls">Pitfalls</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="anatomy">Output anatomy</h2>
+    <p class="lead-col">An OP_RETURN output is an ordinary transaction output with a value (almost always zero satoshis) and a scriptPubKey that begins with the byte <code>0x6a</code>. Everything after that byte is data pushes. The organisation's readers assemble the payload by concatenating every push in order.</p>
+
+    <div class="frame-scroll">
+      <div class="frame">
+        <div class="frame-row">
+          <div class="fld op"><span class="off">byte 0</span><span class="val">6a</span><span class="nm">OP_RETURN</span></div>
+          <div class="fld"><span class="off">byte 1</span><span class="val">34</span><span class="nm">direct push, 52 bytes</span></div>
+          <div class="fld pay"><span class="off">bytes 2..53</span><span class="val">7b 22 70 22 3a 22 6f 70 2d 32 30 22 ...</span><span class="nm">payload, UTF-8 JSON</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="legend">Frame: a 54 byte scriptPubKey carrying a 52 byte OP-20 mint payload. Total transaction weight cost is driven by the script length, not by the value field.</p>
+
+    <h3>Push encodings the readers accept</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Push opcodes recognised inside an OP_RETURN carrier</caption>
+        <thead><tr><th scope="col">Opcode</th><th scope="col">Byte</th><th scope="col">Length source</th><th scope="col">Prefix size</th></tr></thead>
+        <tbody>
+          <tr><td>OP_0</td><td><code>0x00</code></td><td>zero length push</td><td>1 byte</td></tr>
+          <tr><td>direct push</td><td><code>0x01</code> to <code>0x4b</code></td><td>the opcode is the length</td><td>1 byte</td></tr>
+          <tr><td>OP_PUSHDATA1</td><td><code>0x4c</code></td><td>next 1 byte</td><td>2 bytes</td></tr>
+          <tr><td>OP_PUSHDATA2</td><td><code>0x4d</code></td><td>next 2 bytes, little endian</td><td>3 bytes</td></tr>
+          <tr><td>OP_PUSHDATA4</td><td><code>0x4e</code></td><td>next 4 bytes, little endian</td><td>5 bytes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead-col">Any other opcode inside the carrier makes the payload unreadable to the OP-20 and OP Names decoders, which raise <code>protocol_mismatch</code> rather than guessing. A truncated push, where the declared length runs past the end of the script, is rejected the same way.</p>
+
+    <h2 id="unspendable">Provably unspendable</h2>
+    <p class="lead-col">When a script is evaluated, <code>OP_RETURN</code> marks the transaction as invalid immediately. There is no witness, signature, preimage or future soft fork that lets you satisfy it. This is different from an output that merely looks hard to spend: it is a proof, checkable by anyone, that no spend exists.</p>
+    <p class="lead-col">The practical consequences are worth stating plainly:</p>
+    <ul class="lead-col">
+      <li>Any value you attach to an OP_RETURN output is destroyed. Use zero.</li>
+      <li>You cannot recover an OP_RETURN output by "sweeping" a wallet, because there is nothing to sweep.</li>
+      <li>Nothing about the payload gives anyone rights over anything. Ownership in the protocols on this carrier is expressed by <em>other</em> outputs in the same transaction, not by the OP_RETURN itself.</li>
+    </ul>
+
+    <div class="note warn">
+      <strong>The receipt output matters more than the data</strong>
+      <p>In OP Names, the payload names the asset, but the owner comes from a separate spendable output in the same transaction. Losing track of which output is the receipt is a much more common failure than mis-encoding the payload. See <a href="spec.html#opnames">rules R-NAME-8 through R-NAME-13</a>.</p>
+    </div>
+
+    <h2 id="prunable">Prunable from the UTXO set</h2>
+    <p class="lead-col">Because the output is provably unspendable, a node has no reason to keep it in the set of outputs it must track in order to validate future transactions. Full nodes therefore skip OP_RETURN outputs when building the UTXO set. This is the technical reason OP_RETURN is considered the polite way to attach data to Bitcoin.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 320" role="img" aria-labelledby="utxo-title utxo-desc">
+        <title id="utxo-title">An OP_RETURN output living outside the UTXO set</title>
+        <desc id="utxo-desc">A transaction has three outputs. Output zero is an OP_RETURN data carrier with zero value. Output one and output two are ordinary spendable payments. The two spendable outputs are added to the node's UTXO set, drawn as a bounded box that every node must keep in memory. The OP_RETURN output is drawn outside that box, connected only to the block data on disk, showing that the bytes remain in block history forever while imposing no lasting UTXO set cost.</desc>
+
+        <text x="16" y="24" class="dg-accent">TRANSACTION</text>
+        <rect x="16" y="34" width="220" height="230" rx="3" class="dg-box"/>
+        <rect x="30" y="52" width="192" height="52" rx="3" class="dg-op"/>
+        <text x="42" y="72" class="dg-text">vout 0: OP_RETURN</text>
+        <text x="42" y="90" class="dg-mute">0 sats, 6a + payload</text>
+        <rect x="30" y="118" width="192" height="52" rx="3" class="dg-box"/>
+        <text x="42" y="138" class="dg-text">vout 1: P2WPKH</text>
+        <text x="42" y="156" class="dg-mute">546 sats, spendable</text>
+        <rect x="30" y="184" width="192" height="52" rx="3" class="dg-box"/>
+        <text x="42" y="204" class="dg-text">vout 2: change</text>
+        <text x="42" y="222" class="dg-mute">spendable</text>
+
+        <path d="M222 144 L330 144" class="dg-flow" marker-end="url(#a2)"/>
+        <path d="M222 210 L330 190 L330 175" class="dg-flow" marker-end="url(#a2)"/>
+        <text x="240" y="136" class="dg-accent">tracked</text>
+
+        <rect x="336" y="96" width="220" height="120" rx="3" class="dg-box"/>
+        <text x="350" y="122" class="dg-text">UTXO set</text>
+        <text x="350" y="142" class="dg-mute">every validating node keeps</text>
+        <text x="350" y="158" class="dg-mute">this in memory or on disk</text>
+        <text x="350" y="182" class="dg-accent">2 entries from this tx</text>
+
+        <path d="M222 78 L330 78 L330 40 L440 40" class="dg-dash"/>
+        <path d="M440 40 L556 40" class="dg-dash" marker-end="url(#a3)"/>
+        <text x="240" y="70" class="dg-mute">never added</text>
+
+        <rect x="562" y="14" width="182" height="52" rx="3" class="dg-box"/>
+        <text x="574" y="36" class="dg-text">Block on disk</text>
+        <text x="574" y="54" class="dg-mute">payload kept forever</text>
+
+        <rect x="562" y="120" width="182" height="72" rx="3" class="dg-box"/>
+        <text x="574" y="144" class="dg-text">Indexer state</text>
+        <text x="574" y="162" class="dg-mute">rebuilt by replaying</text>
+        <text x="574" y="178" class="dg-mute">blocks, not from UTXOs</text>
+        <path d="M556 156 L562 156" class="dg-line"/>
+
+        <defs>
+          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/>
+          </marker>
+          <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" style="fill:var(--line-strong)"/>
+          </marker>
+        </defs>
+      </svg>
+      <figcaption>Permanence without ownership: the bytes survive in block history, but no node has to carry them in the set it validates against.</figcaption>
+    </figure>
+
+    <p class="lead-col">Note the second consequence, which matters for anyone writing software here: because indexers cannot read protocol state out of the UTXO set, they must replay blocks. That is exactly what the Bitcoin Universe OP Names authority does, and it is why its state can be rebuilt deterministically from a chosen start height.</p>
+
+    <h2 id="relay">Relay and standardness</h2>
+    <p class="lead-col">Whether a node forwards your transaction is <em>policy</em>, not consensus. A transaction that no node will relay is still perfectly valid if a miner includes it.</p>
+    <ul class="lead-col">
+      <li>Bitcoin Core carried a default data carrier limit of 83 bytes for the whole scriptPubKey for many years. That is <code>OP_RETURN</code> plus a one byte push prefix plus 80 payload bytes.</li>
+      <li>Under that default policy a transaction with more than one data carrier output was also non standard.</li>
+      <li>Bitcoin Core version 30 removed that default cap, so a node running current defaults will relay larger OP_RETURN outputs. Older nodes, alternative implementations and individual relay operators may still apply their own limit.</li>
+    </ul>
+    <div class="note">
+      <strong>Design for the narrow case</strong>
+      <p>If you want a payload to propagate everywhere, keep the whole scriptPubKey at 83 bytes or less and use exactly one data carrier output per transaction. Both OP-20 and OP Names require a single carrier anyway, for reasons that have nothing to do with relay: see rules R-20-2 and R-NAME-3.</p>
+    </div>
+    <p class="lead-col">The Bitcoin Universe OP Names reader applies its own hard bound of 4096 assembled payload bytes and records anything larger as <code>payload_too_large</code> evidence. That is an indexer safety bound, not a network rule.</p>
+
+    <h2 id="cost">What it costs</h2>
+    <p class="lead-col">An OP_RETURN output costs fee for its size and nothing else, permanently. There is no dust threshold to satisfy because the output holds zero value, and there is no future spending fee because it can never be spent.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Approximate on-chain size of a single data carrier output</caption>
+        <thead><tr><th scope="col">Payload</th><th scope="col">Push prefix</th><th scope="col">scriptPubKey</th><th scope="col">Output total</th></tr></thead>
+        <tbody>
+          <tr><td>11 bytes, a short name</td><td>1 byte</td><td>13 bytes</td><td>22 bytes</td></tr>
+          <tr><td>52 bytes, an OP-20 mint</td><td>1 byte</td><td>54 bytes</td><td>63 bytes</td></tr>
+          <tr><td>80 bytes, the classic maximum</td><td>1 byte</td><td>82 bytes</td><td>91 bytes</td></tr>
+          <tr><td>220 bytes</td><td>2 bytes, PUSHDATA1</td><td>223 bytes</td><td>232 bytes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="legend">Output total counts 8 bytes of value plus the script length prefix plus the script. Every byte here is non witness data, so it is charged at four weight units per byte.</p>
+    <p class="lead-col">That last point is the honest cost comparison: OP_RETURN data is never discounted. Data in a witness is.</p>
+
+    <h2 id="compare">Compared with other carriers</h2>
+    <p class="lead-col">Three families of technique put data on Bitcoin, and they make genuinely different trade offs. This is the part most easily misrepresented, so the differences are stated in mechanism terms.</p>
+
+    <div class="table-scroll">
+      <table>
+        <caption>Data carrier techniques compared</caption>
+        <thead>
+          <tr><th scope="col">Property</th><th scope="col">OP_RETURN output</th><th scope="col">Witness envelope</th><th scope="col">Data in spendable outputs</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Where the bytes live</th><td>scriptPubKey of an output</td><td>witness of an input, inside an unexecuted script branch</td><td>the output scripts themselves, for example fabricated keys in a bare multisig</td></tr>
+          <tr><th scope="row">Spendable</th><td class="no">never</td><td class="yes">yes, the committing output is ordinary</td><td class="part">technically yes, in practice not by anyone</td></tr>
+          <tr><th scope="row">Enters the UTXO set</th><td class="no">no</td><td class="no">no, the witness is input data</td><td class="yes">yes, and it stays there</td></tr>
+          <tr><th scope="row">Can nodes forget it</th><td class="yes">yes, immediately</td><td class="yes">yes, witness data can be pruned by nodes that keep only headers and the UTXO set</td><td class="no">no, entries persist until spent, and they usually never are</td></tr>
+          <tr><th scope="row">Fee treatment</th><td>full four weight units per byte</td><td>one weight unit per byte, a four times discount</td><td>full four weight units per byte, plus a dust value per output</td></tr>
+          <tr><th scope="row">Practical size</th><td>small, tens to a few hundred bytes</td><td>large, hundreds of kilobytes</td><td>medium, and expensive in both fee and lasting node cost</td></tr>
+          <tr><th scope="row">Reveal timing</th><td>immediate, one transaction</td><td>commit then reveal, two transactions</td><td>immediate, one transaction</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Witness envelopes</h3>
+    <p class="lead-col">An envelope hides content inside a taproot script path that is never executed, then reveals it when the committing output is spent. The content is cheap because witness bytes are discounted, and it is prunable because it is input data rather than an output. What it costs you is a two transaction ceremony and a much larger reveal transaction. Ordinals inscriptions are the well known example of this family, and they are documented elsewhere in the Bitcoin Universe estate.</p>
+
+    <h3>Unprunable outputs, the Stamps approach</h3>
+    <p class="lead-col">Bitcoin Stamps (SRC-20) takes the deliberately opposite position: encode data into outputs that a node cannot discard, historically by splitting the data across fabricated public keys in a bare multisig output. The stated goal is that the data cannot be pruned away even in principle, because it sits in the UTXO set. That is a real property, and it is bought by imposing a lasting cost on every node, plus a dust value per output. Stamps originated outside this organisation.</p>
+
+    <div class="note">
+      <strong>The honest summary</strong>
+      <p>OP_RETURN buys permanence in block history at zero lasting UTXO cost, and pays for it with full price bytes and a small practical size. It does not make data "more permanent" than a witness envelope: both live in blocks forever. What it changes is who has to keep carrying the weight.</p>
+    </div>
+
+    <h2 id="pitfalls">Pitfalls</h2>
+    <ul class="lead-col">
+      <li><strong>Sending value to the data output.</strong> Those satoshis are gone. Always set the value to zero.</li>
+      <li><strong>Two data outputs.</strong> OP-20 rejects a transaction that carries two OP-20 payloads, and OP Names marks any transaction with more than one OP_RETURN as <code>ambiguous_op_return</code> and applies nothing.</li>
+      <li><strong>Assuming the payload proves ownership.</strong> It does not. It names an intent. The receipt output decides who owns the result.</li>
+      <li><strong>Assuming an indexer saw it.</strong> A valid payload that no indexer replayed is invisible to every product. Confirmation on chain and visibility in an application are separate events.</li>
+      <li><strong>Spending an asset bearing UTXO as fee change.</strong> Protocol assets on this carrier ride ordinary looking outputs. Wallets that do not screen their coin selection will destroy them. See <a href="reference.html#screening">funding safety</a>.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="meta">
+      <div><b>Owning repository</b> <span>bitcoinuniverseio/op-return</span></div>
+      <div><b>Source path</b> <span>/carrier.html</span></div>
+      <div><b>Document version</b> <span>1.0.0</span></div>
+      <div><b>Lifecycle</b> <span>experimental</span></div>
+      <div><b>Chain and network</b> <span>bitcoin, mainnet</span></div>
+      <div><b>Last verified</b> <span>2026-09-01</span></div>
+    </div>
+    <p class="links">
+      <a href="https://github.com/bitcoinuniverseio/op-return/edit/main/carrier.html">Edit this page on GitHub</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return">Repository</a>
+      <a href="https://docs.bitcoinuniverse.io">docs.bitcoinuniverse.io</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">Report a vulnerability</a>
+    </p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>

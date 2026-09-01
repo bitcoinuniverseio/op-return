@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OP_RETURN decoder: identify and explain a data carrier payload</title>
+<meta name="description" content="Paste a scriptPubKey hex string. The decoder identifies whether it carries an OP-20, OP Names or OP Inscriptions payload, decodes the fields, explains rejections, and reports size and relay implications. Runs entirely in your browser.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-return/decoder.html">
+<meta name="theme-color" content="#050907" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f7f5" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="OP_RETURN protocol documentation">
+<meta property="og:title" content="OP_RETURN decoder: identify and explain a data carrier payload">
+<meta property="og:description" content="Client-side decoder for OP-20, OP Names and OP Inscriptions payloads carried in an OP_RETURN output.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-return/decoder.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-return/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="mark" href="index.html"><span class="glyph" aria-hidden="true">6a</span><span>OP_RETURN</span></a>
+    <div class="toolbar">
+      <div class="search">
+        <label class="vh" for="site-search">Search this site</label>
+        <input id="site-search" type="search" placeholder="Search, or press /" autocomplete="off" spellcheck="false" data-base="">
+        <ul id="search-results" class="results"></ul>
+      </div>
+      <button id="theme-toggle" class="themebtn" type="button" hidden>theme</button>
+    </div>
+    <nav class="sitenav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="carrier.html">Carrier</a>
+      <a href="spec.html">Specification</a>
+      <a href="guide.html">Guide</a>
+      <a href="reference.html">Reference</a>
+      <a href="vectors.html">Test vectors</a>
+      <a href="decoder.html" aria-current="page">Decoder</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<div class="channel">
+  <div class="wrap">
+    <p class="eyebrow">Decoder 1.0.0 / bitcoin mainnet rules</p>
+    <h1>Read the frame.</h1>
+    <p class="lede">Paste a scriptPubKey. The decoder lays out the bytes, works out which of the three protocols claims the payload, decodes the fields, and tells you why a reader would refuse it.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+
+    <div class="note">
+      <strong>Everything happens in this page</strong>
+      <p>The decoder is a static script in this repository. What you paste is never logged, stored or transmitted. There is no network request, no analytics and no third party code on this site.</p>
+    </div>
+
+    <noscript>
+      <div class="noscript">
+        <p><strong>The decoder needs JavaScript.</strong> Everything else on this site works without it. If you would rather not enable it, the <a href="vectors.html">test vectors page</a> lists real script hex with the outcome each parser produced, and the <a href="spec.html">specification</a> gives the rules the decoder applies.</p>
+      </div>
+    </noscript>
+
+    <div id="decoder-fallback" class="noscript">
+      <p><strong>Loading the decoder.</strong> If this message stays, the script did not run. See the <a href="vectors.html">test vectors</a> instead.</p>
+    </div>
+
+    <form id="decoder-form" class="tool" hidden>
+      <div>
+        <label for="decoder-input">scriptPubKey hex, for example <code>6a0b7361746f7368692e627463</code></label>
+        <textarea id="decoder-input" name="script" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="6a347b2270223a226f702d3230222c..."></textarea>
+      </div>
+      <div class="toolrow">
+        <button class="act" type="submit">Decode</button>
+        <button class="act ghost" type="button" id="decoder-clear">Clear</button>
+      </div>
+      <div>
+        <p class="legend" id="samples-label">Load a sample:</p>
+        <div class="samples" role="group" aria-labelledby="samples-label">
+          <button type="button" data-sample="6a347b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231303030227d">OP-20 mint</button>
+          <button type="button" data-sample="6a477b2270223a226f702d3230222c226f70223a226465706c6f79222c227469636b223a2250495045222c226d6178223a223231303030303030222c226c696d223a2231303030227d">OP-20 deploy</button>
+          <button type="button" data-sample="6a347b2270223a226f702d3230222c226f70223a226d696e74222c227469636b223a2250495045222c22616d74223a2231302e35227d">OP-20 bad amount</button>
+          <button type="button" data-sample="6a0b7361746f7368692e627463">OP Names, plain text</button>
+          <button type="button" data-sample="6a2c7b2270223a226f706e73222c226f70223a22726567222c226e616d65223a227361746f7368692e627463227d">OP Names, JSON reg</button>
+          <button type="button" data-sample="6a0c7361746f7368692e622d7463">OP Names, bad namespace</button>
+          <button type="button" data-sample="6a4c5a7b2270223a226f702d696e736372697074696f6e73222c226f70223a22696e736372696265222c22616464223a226263317177353038643671656a7874646734793572337a6172766172793063357877376b763866337434227d">OP Inscriptions</button>
+          <button type="button" data-sample="6a0d7b22666f6f223a22626172227d">Unrecognised JSON</button>
+          <button type="button" data-sample="6a51">Non push opcode</button>
+        </div>
+      </div>
+      <div id="decoder-output" aria-live="polite"></div>
+    </form>
+
+    <h2 id="how">What the decoder checks</h2>
+    <p class="lead-col">In order, and stopping at the first protocol that claims the payload:</p>
+    <ol class="lead-col">
+      <li><strong>Carrier.</strong> The script must start with <code>0x6a</code>, or with <code>0x00 0x6a</code>, which only the OP Inscriptions scanner accepts. Pushes are decoded with the rules in <a href="spec.html#carrier">R-CAR-3</a> and concatenated in order.</li>
+      <li><strong>OP-20.</strong> The payload must start with a JSON object tagged <code>"p":"op-20"</code>. Field sets, duplicate keys, ticker normalisation and the amount forms are all checked as in <a href="spec.html#op20">R-20</a>.</li>
+      <li><strong>OP Names.</strong> Either a JSON object tagged <code>"p":"opns"</code>, or plain text with exactly one literal dot. Identity is normalised and validated as in <a href="spec.html#opnames">R-NAME-4</a>, including the Unicode dot lookalike rejections.</li>
+      <li><strong>OP Inscriptions.</strong> A JSON tag of <code>op-inscriptions</code>, <code>op_inscriptions</code> or <code>op-inscription</code>, or the narrow historical envelope described in <a href="spec.html#opinscriptions">R-OPI-5</a>.</li>
+      <li><strong>Size and relay.</strong> Script bytes, payload bytes and push count, compared against the 83 byte default data carrier limit and the 4096 byte reader bound.</li>
+    </ol>
+
+    <h3>What it does not do</h3>
+    <ul class="lead-col">
+      <li>It reads one output. Rules that depend on the whole transaction, such as "exactly one OP_RETURN output" or "exactly one OP-20 carrier", cannot be evaluated from a single script.</li>
+      <li>It does not resolve state. It cannot tell you whether a name is already registered, whether a balance exists, or who owns a receipt outpoint.</li>
+      <li>It does not check addresses against a network. An address that is well formed for testnet will be reported as written.</li>
+      <li>It applies mainnet rules only.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="meta">
+      <div><b>Owning repository</b> <span>bitcoinuniverseio/op-return</span></div>
+      <div><b>Source path</b> <span>/decoder.html</span></div>
+      <div><b>Document version</b> <span>1.0.0</span></div>
+      <div><b>Lifecycle</b> <span>experimental</span></div>
+      <div><b>Chain and network</b> <span>bitcoin, mainnet</span></div>
+      <div><b>Last verified</b> <span>2026-09-01</span></div>
+    </div>
+    <p class="links">
+      <a href="https://github.com/bitcoinuniverseio/op-return/edit/main/decoder.html">Edit this page on GitHub</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return">Repository</a>
+      <a href="https://docs.bitcoinuniverse.io">docs.bitcoinuniverse.io</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">Report a vulnerability</a>
+    </p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+<script src="decoder.js" defer></script>
+</body>
+</html>

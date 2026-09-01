@@ -1,19 +1,287 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Discover OP_RETURN / OP-20 — Bitcoin Universe</title>
-  <meta name="description" content="A plain-language look at OP_RETURN / OP-20 and its onchain experience.">
-  <meta name="theme-color" content="#09090f">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reference: indexer semantics, security and limitations</title>
+<meta name="description" content="Terminology, per-protocol indexer semantics for confirmation, mempool and reorg handling, fee and size considerations, security properties including funding UTXO screening, limitations and an implementation checklist.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-return/reference.html">
+<meta name="theme-color" content="#050907" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f7f5" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="OP_RETURN protocol documentation">
+<meta property="og:title" content="Reference: indexer semantics, security and limitations">
+<meta property="og:description" content="How each of the three readers handles confirmation, mempool and reorgs, and what is deliberately not supported.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-return/reference.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-return/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
 </head>
-<body style="--accent:#ff7a45;--accent-2:#ffd166">
-<div class="topbar"><div class="wrap nav"><a class="brand" href="index.html"><span class="brand-mark">OP</span><span>OP_RETURN / OP-20</span></a><nav class="nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a href="reference.html" aria-current="page">Discover</a><a href="guide.html">Get started</a><a class="nav-cta" href="https://inscribe.bitcoinuniverse.io/">Open Bitcoin Universe ↗</a></nav></div></div>
-<main>
-  <div class="wrap hero compact"><div><div class="eyebrow">Discover OP_RETURN / OP-20</div><h1>See the idea behind the <span class="gradient">transaction.</span></h1><p class="lede">Every OP_RETURN begins as a compact onchain message. Compatible OP-20 services bring those messages together into recognizable token activity.</p><div class="actions"><a class="button primary" href="guide.html">Get started →</a><a class="button secondary" href="index.html">Back home</a></div></div><div class="hero-art" aria-hidden="true"><div class="orbit"><div class="core">OP</div><span class="spark one">Bitcoin</span><span class="spark two">community</span><span class="spark three">onchain</span></div></div></div>
-  <section><div class="wrap"><div class="section-head"><div><div class="eyebrow">How it comes together</div><h2>Four ideas. One connected experience.</h2></div><p>Protocol details matter most when they help you understand what you are about to create, collect, or send.</p></div><div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))"><article class="card"><span class="num">01 / IDEA</span><h3>The carrier</h3><p>OP_RETURN stores provably unspendable data in a Bitcoin output.</p></article><article class="card"><span class="num">02 / IDEA</span><h3>The language</h3><p>OP-20 recognizes deploy, mint, and transfer actions.</p></article><article class="card"><span class="num">03 / IDEA</span><h3>The identity</h3><p>Tickers are compared without letter-case differences.</p></article><article class="card"><span class="num">04 / IDEA</span><h3>The view</h3><p>Compatible services interpret OP-20 activity from confirmed transactions.</p></article></div></div></section>
-  <section><div class="wrap spotlight"><div class="eyebrow">Keep the meaning clear</div><h2>Bitcoin confirms the transaction. Compatible services reveal the experience.</h2><p>OP-20 balances are interpreted by compatible services and are separate from Bitcoin’s native consensus rules. Always review the exact payload, recipient, and fees before signing.</p></div></section>
-  <section><div class="wrap"><div class="section-head"><div><div class="eyebrow">Explore the ecosystem</div><h2>Follow the story further.</h2></div><p>These community resources offer more context around the protocol and the world growing around it.</p></div><div class="source-list"><a class="source" href="https://inscribe.bitcoinuniverse.io/" target="_blank" rel="noreferrer"><span>Open Bitcoin Universe</span><span>Visit ↗</span></a><a class="source" href="https://bitcoin.org/en/" target="_blank" rel="noreferrer"><span>Learn about Bitcoin</span><span>Visit ↗</span></a></div></div></section>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="mark" href="index.html"><span class="glyph" aria-hidden="true">6a</span><span>OP_RETURN</span></a>
+    <div class="toolbar">
+      <div class="search">
+        <label class="vh" for="site-search">Search this site</label>
+        <input id="site-search" type="search" placeholder="Search, or press /" autocomplete="off" spellcheck="false" data-base="">
+        <ul id="search-results" class="results"></ul>
+      </div>
+      <button id="theme-toggle" class="themebtn" type="button" hidden>theme</button>
+    </div>
+    <nav class="sitenav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="carrier.html">Carrier</a>
+      <a href="spec.html">Specification</a>
+      <a href="guide.html">Guide</a>
+      <a href="reference.html" aria-current="page">Reference</a>
+      <a href="vectors.html">Test vectors</a>
+      <a href="decoder.html">Decoder</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<div class="channel">
+  <div class="wrap">
+    <p class="eyebrow">Reference</p>
+    <h1>How the readers behave.</h1>
+    <p class="lede">Confirmation, mempool and reorg semantics differ sharply between the three protocols. So do their guarantees. This page states each one separately rather than averaging them into a comfortable summary.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <nav class="toc" aria-label="On this page">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#terms">Terminology</a></li>
+        <li><a href="#semantics">Indexer semantics</a></li>
+        <li><a href="#fees">Fee and size</a></li>
+        <li><a href="#screening">Funding safety</a></li>
+        <li><a href="#security">Security considerations</a></li>
+        <li><a href="#limits">Limitations</a></li>
+        <li><a href="#checklist">Implementation checklist</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="terms">Terminology</h2>
+    <div class="table-scroll">
+      <table>
+        <caption>Terms used consistently across this site</caption>
+        <thead><tr><th scope="col">Term</th><th scope="col">Meaning</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Carrier</th><td>A single OP_RETURN output, including its opcode and every data push.</td></tr>
+          <tr><th scope="row">Payload</th><td>The concatenation of the data pushed by every push in the carrier. Push boundaries carry no meaning.</td></tr>
+          <tr><th scope="row">Reference</th><td>The normalised, NFC lowercase form of an OP-20 ticker. Identity is compared on the reference, never on the text as written.</td></tr>
+          <tr><th scope="row">Receipt output</th><td>The spendable output that determines who owns the result of an OP Names registration or transfer.</td></tr>
+          <tr><th scope="row">Address custody</th><td>An OP Names state where the owner is an address. The name moves only by an authorised explicit transfer.</td></tr>
+          <tr><th scope="row">UTXO custody</th><td>An OP Names state where the owner is a specific outpoint. The name follows spends of that outpoint to output 0.</td></tr>
+          <tr><th scope="row">Burned</th><td>An OP Names terminal state reached when a receipt or follow output cannot hold an owner. The registration stays valid history but has no owner.</td></tr>
+          <tr><th scope="row">Evidence</th><td>A recognised but rejected payload, stored with its reason so the decision is auditable. Evidence never becomes an asset.</td></tr>
+          <tr><th scope="row">Coercion</th><td>A recorded, named adjustment applied to a legacy value, for example truncating an all zero fraction from an amount. Coercions are reported, never silent.</td></tr>
+          <tr><th scope="row">Provisional</th><td>An OP Inscriptions record that is indexed but not yet past the configured confirmation count, and is therefore still removable by a reorg.</td></tr>
+          <tr><th scope="row">Fail closed</th><td>Refusing to act when the required proof is unavailable, rather than guessing. All three readers do this.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="semantics">Indexer semantics</h2>
+
+    <h3>Confirmation</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Confirmation policy recorded per protocol</caption>
+        <thead><tr><th scope="col"></th><th scope="col">OP-20</th><th scope="col">OP Names</th><th scope="col">OP Inscriptions</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Listing minimum confirmations</th><td>not applicable</td><td>not applicable</td><td>none recorded</td></tr>
+          <tr><th scope="row">Settlement minimum confirmations</th><td>not applicable</td><td>not applicable</td><td class="yes">1</td></tr>
+          <tr><th scope="row">Recorded policy</th><td>No supported marketplace mutation reaches a confirmed local state.</td><td>No supported marketplace mutation reaches a confirmed local state.</td><td>A fill is recorded only after the exact receipt spend, buyer receipt and seller payout are confirmed on-chain.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead-col">For OP-20 and OP Names, protocol state itself still comes from confirmed transactions. The rows above describe marketplace lifecycle, which for those two protocols does not exist.</p>
+
+    <h3>Mempool</h3>
+    <ul class="lead-col">
+      <li><strong>OP-20.</strong> Pending activity coverage is deliberately reported as <code>unavailable</code>. The authoritative ledger and public API expose confirmed state, and no exhaustive mempool activity feed exists behind them. An application must not present an unconfirmed OP-20 movement as fact.</li>
+      <li><strong>OP Names.</strong> The same. Pending and mempool coverage is reported as unavailable. The raw block authority replays confirmed blocks only.</li>
+      <li><strong>OP Inscriptions.</strong> Ownership for a marketplace mutation is re-resolved live through a mempool compatible Bitcoin API, so an in flight spend can be observed. Indexer tip lag is not compared with node tip, so freshness is not numerically enforced.</li>
+    </ul>
+
+    <h3>Reorg behaviour</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Reorganisation handling</caption>
+        <thead><tr><th scope="col"></th><th scope="col">Automatic reconciliation</th><th scope="col">Recorded policy</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">OP-20</th><td class="no">no</td><td>The read-only feed has no local lifecycle reconciliation.</td></tr>
+          <tr><th scope="row">OP Names</th><td class="no">no</td><td>The read-only feed has no local lifecycle reconciliation. The raw block authority itself does roll back: at every poll the durable tip is compared with the node, a shallow reorganisation is rolled back one block at a time against verified before-images, and a divergence beyond the configured maximum depth fails closed and leaves readiness false.</td></tr>
+          <tr><th scope="row">OP Inscriptions</th><td class="yes">yes</td><td>The reconciler reopens receipts that are unspent on the active chain and marks conflicting spends stale. Restart reconciliation finds a common ancestor first; a bounded provisional suffix is deleted and replayed, and a deep or already final divergence persists a halt rather than rewriting authoritative rows.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure>
+      <svg viewBox="0 0 760 220" role="img" aria-labelledby="reorg-title reorg-desc">
+        <title id="reorg-title">How a reorganisation is handled by depth</title>
+        <desc id="reorg-desc">A horizontal chain of blocks with a fork. Blocks below the finality line are final. A shallow divergence above the finality line is rolled back block by block and replayed on the replacement branch. A divergence that reaches below the finality line is not rewritten; instead the indexer records a halt and waits for an operator.</desc>
+        <line x1="16" y1="150" x2="744" y2="150" class="dg-dash"/>
+        <text x="16" y="168" class="dg-mute">finality line, advances monotonically after the configured confirmation count</text>
+
+        <rect x="20" y="96" width="70" height="42" rx="3" class="dg-box"/><text x="34" y="122" class="dg-text">n-3</text>
+        <rect x="100" y="96" width="70" height="42" rx="3" class="dg-box"/><text x="114" y="122" class="dg-text">n-2</text>
+        <rect x="180" y="96" width="70" height="42" rx="3" class="dg-box"/><text x="194" y="122" class="dg-text">n-1</text>
+        <line x1="90" y1="117" x2="100" y2="117" class="dg-line"/>
+        <line x1="170" y1="117" x2="180" y2="117" class="dg-line"/>
+        <line x1="250" y1="117" x2="262" y2="80" class="dg-line"/>
+        <line x1="250" y1="117" x2="262" y2="154" class="dg-line"/>
+
+        <rect x="264" y="56" width="80" height="42" rx="3" class="dg-op"/><text x="278" y="82" class="dg-text">n (a)</text>
+        <rect x="354" y="56" width="80" height="42" rx="3" class="dg-op"/><text x="368" y="82" class="dg-text">n+1 (a)</text>
+        <line x1="344" y1="77" x2="354" y2="77" class="dg-line"/>
+        <text x="446" y="70" class="dg-accent">provisional suffix</text>
+        <text x="446" y="86" class="dg-mute">deleted and replayed</text>
+
+        <rect x="264" y="134" width="80" height="42" rx="3" class="dg-box"/><text x="278" y="160" class="dg-text">n (b)</text>
+        <rect x="354" y="134" width="80" height="42" rx="3" class="dg-box"/><text x="368" y="160" class="dg-text">n+1 (b)</text>
+        <rect x="444" y="134" width="80" height="42" rx="3" class="dg-box"/><text x="458" y="160" class="dg-text">n+2 (b)</text>
+        <line x1="344" y1="155" x2="354" y2="155" class="dg-line"/>
+        <line x1="434" y1="155" x2="444" y2="155" class="dg-line"/>
+        <text x="536" y="150" class="dg-accent">replacement branch</text>
+        <text x="536" y="166" class="dg-mute">applied after rollback</text>
+
+        <text x="16" y="30" class="dg-text">Beyond the configured maximum depth: no rewrite, a halt is persisted</text>
+        <text x="16" y="46" class="dg-mute">and readiness stays false until an operator investigates</text>
+      </svg>
+      <figcaption>Shallow divergence is repaired mechanically. Deep divergence is a human decision, not an automatic one.</figcaption>
+    </figure>
+
+    <h3>Sources of truth</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Recorded source of truth per concern</caption>
+        <thead><tr><th scope="col">Concern</th><th scope="col">OP-20 and OP Names</th><th scope="col">OP Inscriptions</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Order book</th><td>Read-only marketplace feed</td><td>Universe SQL OP inscription market orders</td></tr>
+          <tr><th scope="row">Ownership</th><td>No supported mutation authority</td><td>Current title receipt resolved through a mempool compatible Bitcoin API</td></tr>
+          <tr><th scope="row">Settlement</th><td>No supported settlement registration</td><td>Exact title outpoint spend and buyer receipt output observed through the Bitcoin API</td></tr>
+          <tr><th scope="row">Protocol state</th><td>Protocol API with legacy fallback</td><td>Standalone OP Inscriptions indexer for catalogue reads</td></tr>
+          <tr><th scope="row">Mutation gate</th><td>All legacy replay-key mutations are rejected</td><td>Live title receipt is re-resolved, but indexer tip lag is not compared with node tip</td></tr>
+          <tr><th scope="row">Freshness enforcement</th><td class="no">none</td><td class="no">none numeric; ownership is checked per mutation</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="fees">Fee and size</h2>
+    <ul class="lead-col">
+      <li>OP_RETURN bytes are non witness data and are charged at four weight units per byte. There is no discount.</li>
+      <li>Keeping the whole scriptPubKey at 83 bytes or fewer keeps the transaction relayable under both the long standing default policy and current defaults.</li>
+      <li>The data output holds zero value, so it does not consume a dust threshold, but the <em>receipt</em> output does. Budget 546 satoshis for a witness v0 receipt and 330 satoshis for a taproot receipt as practical minimums.</li>
+      <li>A rejected payload costs the same fee as an accepted one. Validate before you broadcast, not after.</li>
+      <li>Splitting a payload across several pushes changes the script size by one prefix byte per extra push and changes nothing else. It does not reduce cost.</li>
+    </ul>
+
+    <h2 id="screening">Funding safety: never spend an asset bearing output</h2>
+    <p class="lead-col">This is the sharpest practical hazard on this carrier. Protocol assets ride ordinary looking spendable outputs. A pending legacy OP-20 transfer UTXO, a name custody outpoint and a listed asset are all indistinguishable from plain change to a naive coin selector. Spending one as fee input moves or destroys whatever it carries.</p>
+
+    <p class="lead-col">Bitcoin Universe Core screens funding candidates against its own OP-20 records before selecting them. The properties worth copying are these:</p>
+    <ul class="lead-col">
+      <li><strong>First party records, batched.</strong> Candidate outputs are checked against Core's own transfer, domain and trade records in a small number of batched lookups keyed by transaction id and by outpoint, rather than one query per candidate.</li>
+      <li><strong>A bare transaction id key when the record has no output index.</strong> When a record names a transaction but not a specific output, every output of that transaction is treated as asset bearing. The screen refuses to guess which output was meant.</li>
+      <li><strong>Fail closed on unreadable records.</strong> If the screening lookup itself fails, the operation is refused with a payment safety error. It does not fall back to unscreened selection.</li>
+      <li><strong>Screening happens before selection, not after.</strong> A flagged outpoint is skipped while the funding total is still being accumulated, so it never reaches the signing step.</li>
+    </ul>
+    <div class="note">
+      <strong>What this means if you are building a wallet</strong>
+      <p>An address balance is not a spendable balance on this carrier. Any wallet that funds a transaction from a plain UTXO list, with no protocol aware exclusion set, will eventually burn a user's asset as change. Treat the exclusion set as a required input to coin selection, and treat its unavailability as a hard stop.</p>
+    </div>
+
+    <h2 id="security">Security considerations</h2>
+    <ul class="lead-col">
+      <li><strong>Interpretation is not consensus.</strong> An OP-20 balance or a name ownership record is one indexer's reading. A different indexer with a different rule set will produce a different answer, and Bitcoin will not arbitrate.</li>
+      <li><strong>Payload addresses are not authority.</strong> The OP Inscriptions marketplace authority explicitly does not trust addresses written in a payload, replay keys, or a first spendable output heuristic. Neither should you.</li>
+      <li><strong>Retired mutation paths fail closed.</strong> The legacy random key and replay key marketplace mutations return HTTP 410. An interface that still shows those buttons can reach a broadcast step before the failure, which is a real way to lose fees.</li>
+      <li><strong>Homograph names.</strong> OP Names rejects a list of Unicode dot lookalikes precisely because a name that renders like <code>a.btc</code> but uses a different code point would otherwise be a distinct identity. Compare normalised names, never rendered text.</li>
+      <li><strong>Duplicate JSON keys.</strong> A permissive parser keeps the last value; an attacker chooses the parser. Both readers check for repeated top level keys textually, before parsing.</li>
+      <li><strong>Amount coercions must be visible.</strong> When a legacy value is truncated, the coercion is named and recorded. Silent truncation would let a payload mean one thing to a writer and another to a reader.</li>
+      <li><strong>Deep reorgs are an operator decision.</strong> A divergence past the configured maximum depth halts rather than rewriting final rows, and the halt is not auto cleared.</li>
+      <li><strong>Report vulnerabilities privately.</strong> Use the private advisory link in <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">SECURITY.md</a>.</li>
+    </ul>
+
+    <h2 id="limits">Limitations</h2>
+    <ul class="lead-col">
+      <li>No mempool activity feed for OP-20 or OP Names. Unconfirmed state is not available and should not be simulated.</li>
+      <li>No enforced freshness contract. None of the three readers compares indexer tip lag against node tip with a numeric threshold, so a stale read is possible and is not signalled by a lag error.</li>
+      <li>No OP-20 or OP Names marketplace execution. Listing, buying, offers, settlement and reconciliation are all unsupported, and the retired paths return HTTP 410.</li>
+      <li>No atomic listing update for OP Inscriptions. Cancel and relist.</li>
+      <li>No offer workflow for any of the three protocols.</li>
+      <li>The OP Names raw block authority is code complete but deliberately not production enabled. Its scan, browse, genesis, canary and execution gates all default off, and readiness stays false until an independently reviewed genesis determination, a full replay, corpus reconciliation and read only canaries are done.</li>
+      <li>The OP Names replay boundary is an operational starting point chosen conservatively below the earliest observed activity. It is not proof that no older protocol event exists.</li>
+      <li>OP-20 assets with incomplete historical activity or unresolved custody are retained as diagnostic state and excluded from usable authority rather than shown with an approximate balance.</li>
+      <li>Some historical OP-20 balance rows contain null addresses, negative corrections, or integers beyond JavaScript's exact range. Those rows are never shown as wallets and are never rounded.</li>
+    </ul>
+
+    <h2 id="checklist">Implementation checklist</h2>
+    <p class="lead-col">For anyone writing a reader, a wallet or an explorer against this carrier.</p>
+    <h3>Carrier handling</h3>
+    <ul class="lead-col">
+      <li>Reject a non push opcode inside the carrier instead of skipping it, unless you are building a catalogue rather than an authority.</li>
+      <li>Reject a push whose declared length exceeds the script.</li>
+      <li>Concatenate pushes in order; do not assume a single push.</li>
+      <li>Decode strictly as UTF-8 for OP-20 and OP Names. Do not fall back to a lossy decoder.</li>
+      <li>Bound the assembled payload. 4096 bytes is the bound the organisation's reader uses.</li>
+    </ul>
+    <h3>Protocol handling</h3>
+    <ul class="lead-col">
+      <li>Check for repeated top level JSON keys textually, before parsing.</li>
+      <li>Enforce the exact allowed field set per operation. Do not accept extension fields.</li>
+      <li>Normalise identity before comparison: NFC, trim, lowercase, and for names apply the dot lookalike and path separator rejections.</li>
+      <li>Count OP_RETURN outputs. OP-20 needs exactly one OP-20 carrier; OP Names needs exactly one OP_RETURN output in the whole transaction.</li>
+      <li>Model the OP-20 legacy two stage transfer explicitly. Do not collapse it.</li>
+      <li>Derive the OP Names receipt index from the carrier index, not from a fixed constant.</li>
+      <li>Treat burned names as valid history with no owner, not as unregistered.</li>
+      <li>Assemble multi part OP Inscriptions content only when every part is present exactly once.</li>
+    </ul>
+    <h3>Operational handling</h3>
+    <ul class="lead-col">
+      <li>Commit block, records and cursor in one transaction.</li>
+      <li>Verify each block against a fresh height to hash lookup and its expected parent, and use an independent verifier where you can.</li>
+      <li>Keep new records provisional until a configured confirmation count, and advance finality monotonically.</li>
+      <li>On restart, find a common ancestor before mutating anything.</li>
+      <li>Halt rather than rewrite on a deep or already final divergence, and do not clear the halt automatically.</li>
+      <li>Screen funding candidates against your own asset records before coin selection, and fail closed when that screen is unavailable.</li>
+      <li>Report coverage honestly, including reporting pending activity as unavailable when you have no mempool feed.</li>
+    </ul>
+  </div>
+</section>
+
 </main>
-<footer><div class="wrap footer-inner"><span>OP_RETURN / OP-20 on Bitcoin</span><span>Presented by <a href="https://github.com/bitcoinuniverse/op-return">Bitcoin Universe</a></span></div></footer></body></html>
+
+<footer>
+  <div class="wrap">
+    <div class="meta">
+      <div><b>Owning repository</b> <span>bitcoinuniverseio/op-return</span></div>
+      <div><b>Source path</b> <span>/reference.html</span></div>
+      <div><b>Document version</b> <span>1.0.0</span></div>
+      <div><b>Lifecycle</b> <span>experimental</span></div>
+      <div><b>Chain and network</b> <span>bitcoin, mainnet</span></div>
+      <div><b>Last verified</b> <span>2026-09-01</span></div>
+    </div>
+    <p class="links">
+      <a href="https://github.com/bitcoinuniverseio/op-return/edit/main/reference.html">Edit this page on GitHub</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return">Repository</a>
+      <a href="https://docs.bitcoinuniverse.io">docs.bitcoinuniverse.io</a>
+      <a href="https://github.com/bitcoinuniverseio/op-return/blob/main/SECURITY.md">Report a vulnerability</a>
+    </p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>
