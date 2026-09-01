@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "op-return",
+  "name": "OP_RETURN and OP-20",
+  "classification": "protocol",
+  "repository": "bitcoinuniverseio/op-return",
+  "documentationUrl": "https://docs.bitcoinuniverse.io/protocols/op-return/",
+  "docsRoot": ".",
+  "sourceRef": "main",
+  "lifecycle": "experimental",
+  "chains": [
+    {
+      "chain": "bitcoin",
+      "networks": [
+        "mainnet"
+      ]
+    }
+  ],
+  "protocols": [
+    "op-return",
+    "op-20"
+  ],
+  "audiences": [
+    "user",
+    "app-developer",
+    "protocol-implementer"
+  ],
+  "owners": [
+    "bitcoinuniverseio"
+  ],
+  "lastVerified": {
+    "commit": "1260e9302f08ae028143e4130c744ac42d3ea0aa",
+    "timestamp": "2026-09-01T02:00:00Z"
+  },
+  "securityClassification": "public"
+}
